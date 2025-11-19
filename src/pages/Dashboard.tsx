@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useWallet } from "../context/WalletContext";
+import { useWallet } from "../context/walletContext";
 import FhirForm, { type FhirFormData } from "../components/FhirForm";
 import { sha256Hex } from "../utils/hash";
 import ProvidersPanel from "../components/ProvidersPanel";
