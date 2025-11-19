@@ -22,20 +22,15 @@ const WalletButton: React.FC = () => {
       </button>
     </div>
   ) : (
-    <div>
+    <div className="w-full flex justify-end p-4">
       <button
         onClick={connect}
-        style={{
-          background: "#2563eb",
-          color: "white",
-          padding: "8px 12px",
-          borderRadius: 6,
-        }}
+        className="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-md transition"
       >
         Connect Wallet
       </button>
       {lastMessage && (
-        <div style={{ marginTop: 6, fontSize: 12 }}>{lastMessage}</div>
+        <div className="text-center text-gray-500 text-sm mb-6">{lastMessage}</div>
       )}
     </div>
   );

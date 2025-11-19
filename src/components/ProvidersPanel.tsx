@@ -34,16 +34,24 @@ const ProvidersPanel: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 8 }}>
-      <h2>Healthcare Providers</h2>
-      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+    <div className="p-6 rounded-2xl bg-white shadow-xl border border-gray-100">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+        Healthcare Providers
+      </h2>
+
+      <ul className="space-y-5">
         {providers.map((p) => (
-          <li key={p.id} style={{ padding: "10px 0", borderBottom: "1px solid #eee" }}>
-            <strong>{p.name}</strong>
-            <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>{p.description}</p>
+          <li
+            key={p.id}
+            className="p-4 rounded-xl border border-gray-200 hover:shadow-lg transition flex flex-col justify-between"
+          >
+            <div>
+              <strong className="text-gray-900 text-lg">{p.name}</strong>
+              <p className="text-gray-500 mt-1">{p.description}</p>
+            </div>
             <button
               onClick={workflows[p.id]}
-              style={{ marginTop: 6, padding: "6px 10px", borderRadius: 6, background: "#0ea5e9", color: "white" }}
+              className="mt-3 self-start px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-medium transition"
             >
               Launch Workflow
             </button>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useWallet } from "../context/walletContext";
+import { useWallet } from "../context/WalletContext";
 
 interface LookupResult {
   overlay: any;
