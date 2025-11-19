@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { WalletProvider } from "./context/walletContext";
+import { WalletProvider } from "./context/WalletContext";
 import Dashboard from "./pages/Dashboard";
 import "./index.css"; // optional, global styles
 
