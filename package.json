@@ -21,6 +21,7 @@
     "@types/node": "^22.15.20",
     "@types/react": "^19.2.6",
     "@types/react-dom": "^19.2.3",
+    "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react": "^4.4.1",
     "autoprefixer": "^10.4.22",
     "eslint": "^9.25.0",
@@ -39,7 +40,8 @@
     "@bsv/lars": "^1.5.1",
     "bsv": "^2.0.10",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^6.30.2"
   },
   "keywords": []
 }
