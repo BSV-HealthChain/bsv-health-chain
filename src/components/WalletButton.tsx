@@ -2,7 +2,7 @@ import React from "react";
 import { useWallet } from "../context/WalletContext";
 
 const WalletButton: React.FC = () => {
-  const { pubKey, connect, disconnect, lastMessage } = useWallet();
+  const { pubKey, connectWallet, disconnect, lastMessage } = useWallet();
 
   return pubKey ? (
     <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -24,7 +24,7 @@ const WalletButton: React.FC = () => {
   ) : (
     <div className="w-full flex justify-end p-4">
       <button
-        onClick={connect}
+        onClick={connectWallet}
         className="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-md transition"
       >
         Connect Wallet
