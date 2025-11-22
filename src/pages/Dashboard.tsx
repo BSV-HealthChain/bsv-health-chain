@@ -10,7 +10,7 @@ const SATOSHIS_TO_PAY = 10;
 const RECEIVING_ADDRESS = "14rUsTzH1ecaiV2soyVJCsk95SS7L757sY";
 
 const Dashboard: React.FC = () => {
-  const { pubKey, connect, wallet, lastMessage, setLastMessage } = useWallet();
+  const { pubKey, connectWallet, wallet, lastMessage, setLastMessage } = useWallet();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFormSubmit = async (data: FhirFormData) => {
@@ -34,10 +34,17 @@ const Dashboard: React.FC = () => {
 
       setLastMessage("Requesting payment from wallet...");
 
-      const { txid, rawTx } = await wallet.pay({
-        satoshis: SATOSHIS_TO_PAY,
-        to: RECEIVING_ADDRESS,
-      });
+      // Check wallet has pay()
+    if (!wallet.pay) {
+      alert("This wallet does not support payments");
+      return;
+    }
+
+    // Call wallet.pay
+    const { txid, rawTx } = await wallet.pay({
+      satoshis: SATOSHIS_TO_PAY,
+      to: RECEIVING_ADDRESS,
+    });
 
       const formString = JSON.stringify(data);
       const formHash = sha256Hex(formString);
@@ -71,7 +78,7 @@ const Dashboard: React.FC = () => {
       {!pubKey && (
         <div className="max-w-[1200px] mx-auto mb-6 px-4">
           <button
-            onClick={connect}
+            onClick={connectWallet}
             className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md transition"
           >
             Connect Wallet

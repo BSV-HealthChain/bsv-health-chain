@@ -6,7 +6,7 @@ interface LoginModalProps {
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
-  const { connect } = useWallet();
+  const { connectWallet } = useWallet();
   const [mode, setMode] = useState<string | null>(null);
 
   return (
@@ -35,7 +35,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
           <button
             onClick={() => {
               setMode("wallet");
-              connect();
+              connectWallet();
               onClose();
             }}
             style={{
