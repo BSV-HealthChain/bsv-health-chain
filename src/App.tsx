@@ -6,7 +6,16 @@ import { UserProvider } from "./context/UserContext";
 
 import Home from "./pages/Home";
 import RoleSelection from "./pages/RoleSelection";
-import PatientDashboard from "./pages/PatientDashboard";
+
+// Patient pages
+import PatientLayout from "./pages/patient/PatientLayout";
+import SubmitData from "./pages/patient/SubmitData";
+import Consultations from "./pages/patient/Consultations";
+import Providers from "./pages/patient/Providers";
+import Payments from "./pages/patient/Payments";
+import Records from "./pages/patient/Records";
+
+// Provider
 import ProviderDashboard from "./pages/ProvidersDashboard";
 
 const App: React.FC = () => {
@@ -18,7 +27,18 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/select-role" element={<RoleSelection />} />
-              <Route path="/patient" element={<PatientDashboard />} />
+
+              {/* Patient routes */}
+              <Route path="/patient" element={<PatientLayout />}>
+                <Route index element={<SubmitData />} /> {/* default */}
+                <Route path="submit-data" element={<SubmitData />} />
+                <Route path="consultations" element={<Consultations />} />
+                <Route path="providers" element={<Providers />} />
+                <Route path="payments" element={<Payments />} />
+                <Route path="records" element={<Records />} />
+              </Route>
+
+              {/* Provider */}
               <Route path="/provider" element={<ProviderDashboard />} />
             </Routes>
           </div>
@@ -29,4 +49,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
