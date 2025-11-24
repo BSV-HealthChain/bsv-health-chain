@@ -8,7 +8,12 @@ const RoleSelection: React.FC = () => {
 
   const choose = (role: "patient" | "provider") => {
     setRole(role);
-    navigate(role === "patient" ? "/patient" : "/provider");
+
+    if (role === "patient") {
+      navigate("/patient/submit-data"); // FIXED
+    } else {
+      navigate("/provider"); // Provider dashboard
+    }
   };
 
   return (
