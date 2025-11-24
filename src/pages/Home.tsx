@@ -15,7 +15,8 @@ const Home: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen">
-      <h1 className="text-xl mb-4">BSV HealthChain</h1>
+      <h1 className="text-xl mb-4">zHealth</h1>
+      <p> Register with zHealth by connecting your BSV Wallet</p>
       <WalletButton />
     </div>
   );
