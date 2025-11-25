@@ -97,27 +97,26 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     const win: any = window;
 
     // Metanet Client
-const metanetWallet = win.metanetClient;
-if (metanetWallet) {
-  try {
-    const key = await metanetWallet.connect(); // waits for auth automatically
-    if (key) {
-      setWallet({
-        sign: metanetWallet.sign?.bind(metanetWallet),
-        pay: metanetWallet.pay?.bind(metanetWallet),
-        disconnect: metanetWallet.disconnect?.bind(metanetWallet),
-        identityKey: key,
-        getTokens: metanetWallet.getTokens?.bind(metanetWallet),
-      } as WalletClientExtended);
-      setPubKey(key);
-      setIsConnected(true);
-      setLastMessage("Connected to Metanet Client");
-      return;
+// Metanet Client
+    if (win.metanetClient?.connect) {
+      try {
+        const key = await win.metanetClient.connect();
+        setWallet({
+          sign: win.metanetClient.sign?.bind(win.metanetClient),
+          pay: win.metanetClient.pay?.bind(win.metanetClient),
+          disconnect: win.metanetClient.disconnect?.bind(win.metanetClient),
+          identityKey: key,
+          getTokens: win.metanetClient.getTokens?.bind(win.metanetClient),
+        } as WalletClientExtended);
+        setPubKey(key);
+        setIsConnected(true);
+        setLastMessage("Connected to Metanet Client");
+        return;
+      } catch (e) {
+        console.error("Metanet Client connection failed:", e);
+      }
     }
-  } catch (e) {
-    console.error("Metanet Client connection failed:", e);
-  }
-}
+
 
 
     // BRC-100 compatible wallet (if available in window)
