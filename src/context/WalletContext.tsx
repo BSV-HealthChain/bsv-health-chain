@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { WalletClient } from "@bsv/sdk";
 
 // -----------------------------
@@ -76,38 +76,49 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
     // BSV Desktop Wallet
     try {
-      const desktopWallet = new WalletClient() as WalletClientExtended;
-      await desktopWallet.waitForAuthentication();
-      setWallet(desktopWallet);
-      setPubKey(desktopWallet.identityKey);
-      setIsConnected(true);
-      setLastMessage("Connected to BSV Desktop Wallet");
-      return;
-    } catch (err) {
-      console.warn("BSV Desktop Wallet not available:", err);
-    }
+  const desktopWallet = new WalletClient() as WalletClientExtended;
+
+  // Wait automatically for Desktop Wallet authentication
+  await desktopWallet.waitForAuthentication();
+
+  // If connected, identityKey will now be available
+  if (desktopWallet.identityKey) {
+    setWallet(desktopWallet);
+    setPubKey(desktopWallet.identityKey);
+    setIsConnected(true);
+    setLastMessage("Connected to BSV Desktop Wallet");
+    return;
+  }
+} catch (err) {
+  console.warn("BSV Desktop Wallet not available:", err);
+}
+
 
     const win: any = window;
 
     // Metanet Client
-    if (win.metanetClient?.connect) {
-      try {
-        const key = await win.metanetClient.connect();
-        setWallet({
-          sign: win.metanetClient.sign?.bind(win.metanetClient),
-          pay: win.metanetClient.pay?.bind(win.metanetClient),
-          disconnect: win.metanetClient.disconnect?.bind(win.metanetClient),
-          identityKey: key,
-          getTokens: win.metanetClient.getTokens?.bind(win.metanetClient),
-        } as WalletClientExtended);
-        setPubKey(key);
-        setIsConnected(true);
-        setLastMessage("Connected to Metanet Client");
-        return;
-      } catch (e) {
-        console.error("Metanet Client connection failed:", e);
-      }
+const metanetWallet = win.metanetClient;
+if (metanetWallet) {
+  try {
+    const key = await metanetWallet.connect(); // waits for auth automatically
+    if (key) {
+      setWallet({
+        sign: metanetWallet.sign?.bind(metanetWallet),
+        pay: metanetWallet.pay?.bind(metanetWallet),
+        disconnect: metanetWallet.disconnect?.bind(metanetWallet),
+        identityKey: key,
+        getTokens: metanetWallet.getTokens?.bind(metanetWallet),
+      } as WalletClientExtended);
+      setPubKey(key);
+      setIsConnected(true);
+      setLastMessage("Connected to Metanet Client");
+      return;
     }
+  } catch (e) {
+    console.error("Metanet Client connection failed:", e);
+  }
+}
+
 
     // BRC-100 compatible wallet (if available in window)
     if (win.brc100Wallet?.connect) {
@@ -134,10 +145,6 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     alert("Please install BSV Desktop Wallet, Metanet Client, or a BRC-100 wallet.");
   };
 
-  // Auto-connect on mount
-  useEffect(() => {
-    connectWallet();
-  }, []);
 
   return (
     <WalletContext.Provider

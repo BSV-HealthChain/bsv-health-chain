@@ -9,7 +9,7 @@ const SATOSHIS_TO_PAY = 10;
 const RECEIVING_ADDRESS = "14rUsTzH1ecaiV2soyVJCsk95SS7L757sY";
 
 const SubmitData: React.FC = () => {
-  const { pubKey, wallet, connectWallet, lastMessage, setLastMessage } = useWallet();
+  const { pubKey, wallet, isConnected, connectWallet, setLastMessage } = useWallet();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFormSubmit = async (data: FhirFormData) => {
@@ -46,16 +46,18 @@ const SubmitData: React.FC = () => {
 
   return (
     <div className="p-6">
-      {!pubKey && (
-        <button
-          onClick={connectWallet}
-          className="bg-purple-600 text-white px-4 py-2 rounded"
-        >
-          Connect Wallet
-        </button>
-      )}
-
-      {lastMessage && <p className="my-3">{lastMessage}</p>}
+      {!isConnected ? (
+  <button
+    onClick={connectWallet}
+    className="bg-purple-600 text-white px-4 py-2 rounded"
+  >
+    Connect BSV Wallet
+  </button>
+) : (
+  <p className="text-green-600 font-semibold">
+    Connected: {pubKey?.slice(0, 12)}...
+  </p>
+)}
 
       <h1 className="text-2xl font-bold mb-4">Submit Medical Data</h1>
 
