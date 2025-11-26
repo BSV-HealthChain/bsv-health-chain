@@ -75,23 +75,31 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     setLastMessage("Connecting to wallet...");
 
     // BSV Desktop Wallet
+   try {
+  const win: any = window;
+
+  // Detect Desktop Wallet BEFORE connecting
+  if (win.bsvDesktop) {
+    const desktopWallet = new WalletClient() as WalletClientExtended;
+
     try {
-  const desktopWallet = new WalletClient() as WalletClientExtended;
+      await desktopWallet.waitForAuthentication();
 
-  // Wait automatically for Desktop Wallet authentication
-  await desktopWallet.waitForAuthentication();
-
-  // If connected, identityKey will now be available
-  if (desktopWallet.identityKey) {
-    setWallet(desktopWallet);
-    setPubKey(desktopWallet.identityKey);
-    setIsConnected(true);
-    setLastMessage("Connected to BSV Desktop Wallet");
-    return;
+      if (desktopWallet.identityKey) {
+        setWallet(desktopWallet);
+        setPubKey(desktopWallet.identityKey);
+        setIsConnected(true);
+        setLastMessage("Connected to BSV Desktop Wallet");
+        return;
+      }
+    } catch (authErr) {
+      console.warn("Desktop wallet detected but authentication failed:", authErr);
+    }
   }
 } catch (err) {
   console.warn("BSV Desktop Wallet not available:", err);
 }
+
 
 
     const win: any = window;
