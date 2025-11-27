@@ -12,7 +12,7 @@ const RoleSelection: React.FC = () => {
     if (role === "patient") {
       navigate("/patient/submit-data"); // FIXED
     } else {
-      navigate("/provider"); // Provider dashboard
+      navigate("/provider?tab=form"); // Provider dashboard
     }
   };
 
