@@ -4,13 +4,14 @@ import { WalletClient } from "@bsv/sdk";
 // -----------------------------
 // Extend WalletClient for TypeScript
 // -----------------------------
-interface WalletClientExtended extends WalletClient {
-  identityKey: string; // Desktop wallet pubKey
+type WalletClientExtended = {
+  identityKey: string;
   sign: (txHex: string) => Promise<string>;
-  pay: (params: { satoshis: number; to: string }) => Promise<{ txid: string; rawTx: string }>;
+  pay?: (params: { satoshis: number; to: string }) => Promise<{ txid: string; rawTx: string }>;
   disconnect?: () => void;
-  getTokens?: () => Promise<any[]>; // BRC-100 compatible wallets
-}
+  getTokens?: () => Promise<any[]>;
+} & Partial<WalletClient>;
+
 
 // -----------------------------
 // Context type
@@ -72,85 +73,121 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   // Connect wallet
   // -----------------------------
   const connectWallet = async () => {
-    setLastMessage("Connecting to wallet...");
+    
+  setLastMessage("Connecting to wallet...");
 
-    // BSV Desktop Wallet
-   try {
   const win: any = window;
 
-  // Detect Desktop Wallet BEFORE connecting
-  if (win.bsvDesktop) {
-    const desktopWallet = new WalletClient() as WalletClientExtended;
+  // ----------------------------------------------------
+  // 1. BSV DESKTOP WALLET DETECTION
+  // ----------------------------------------------------
+  try {
+    console.log("Checking for BSV Desktop Wallet…");
 
-    try {
-      await desktopWallet.waitForAuthentication();
+    // Desktop Wallet ALWAYS injects this
+    if (win.bsvDesktop || win.bsvdesktop || win.BsvDesktop) {
+      console.log("BSV Desktop Wallet flag detected!");
 
-      if (desktopWallet.identityKey) {
-        setWallet(desktopWallet);
-        setPubKey(desktopWallet.identityKey);
-        setIsConnected(true);
-        setLastMessage("Connected to BSV Desktop Wallet");
-        return;
-      }
-    } catch (authErr) {
-      console.warn("Desktop wallet detected but authentication failed:", authErr);
-    }
-  }
-} catch (err) {
-  console.warn("BSV Desktop Wallet not available:", err);
+      const desktopWallet = new WalletClient() as WalletClientExtended;
+
+      try {
+        // Try handshake
+        if (desktopWallet?.waitForAuthentication) {
+  await desktopWallet.waitForAuthentication();
+} else {
+  console.warn("waitForAuthentication() is not available on this wallet.");
 }
 
 
+        if (desktopWallet.identityKey) {
+          console.log("Desktop wallet authenticated:", desktopWallet.identityKey);
 
-    const win: any = window;
+          setWallet(desktopWallet);
+          setPubKey(desktopWallet.identityKey);
+          setIsConnected(true);
+          setLastMessage("Connected to BSV Desktop Wallet");
 
-    // Metanet Client
-// Metanet Client
+          return;
+        }
+
+        console.warn("Desktop Wallet present but identityKey missing");
+      } catch (authErr) {
+        console.warn("Desktop Wallet handshake failed:", authErr);
+      }
+    } else {
+      console.log("No Desktop Wallet flag found");
+    }
+  } catch (e) {
+    console.warn("Desktop Wallet detection error:", e);
+  }
+
+  // ----------------------------------------------------
+  // 2. METANET CLIENT DETECTION
+  // ----------------------------------------------------
+  try {
+    console.log("Checking Metanet Client…");
+
     if (win.metanetClient?.connect) {
-      try {
-        const key = await win.metanetClient.connect();
-        setWallet({
-          sign: win.metanetClient.sign?.bind(win.metanetClient),
-          pay: win.metanetClient.pay?.bind(win.metanetClient),
-          disconnect: win.metanetClient.disconnect?.bind(win.metanetClient),
-          identityKey: key,
-          getTokens: win.metanetClient.getTokens?.bind(win.metanetClient),
-        } as WalletClientExtended);
-        setPubKey(key);
-        setIsConnected(true);
-        setLastMessage("Connected to Metanet Client");
-        return;
-      } catch (e) {
-        console.error("Metanet Client connection failed:", e);
-      }
+      const key = await win.metanetClient.connect();
+
+      console.log("Metanet connected, pubkey:", key);
+
+      setWallet({
+        sign: win.metanetClient.sign.bind(win.metanetClient),
+        pay: win.metanetClient.pay?.bind(win.metanetClient),
+        disconnect: win.metanetClient.disconnect?.bind(win.metanetClient),
+        getTokens: win.metanetClient.getTokens?.bind(win.metanetClient),
+        identityKey: key,
+      });
+
+      setPubKey(key);
+      setIsConnected(true);
+      setLastMessage("Connected to Metanet Client");
+
+      return;
     }
+  } catch (e) {
+    console.error("Metanet connect failed:", e);
+  }
 
+  // ----------------------------------------------------
+  // 3. BRC-100 WEB WALLET DETECTION
+  // ----------------------------------------------------
+  try {
+    console.log("Checking BRC-100 Wallet…");
 
-
-    // BRC-100 compatible wallet (if available in window)
     if (win.brc100Wallet?.connect) {
-      try {
-        const key = await win.brc100Wallet.connect();
-        setWallet({
-          sign: win.brc100Wallet.sign?.bind(win.brc100Wallet),
-          pay: win.brc100Wallet.pay?.bind(win.brc100Wallet),
-          disconnect: win.brc100Wallet.disconnect?.bind(win.brc100Wallet),
-          identityKey: key,
-          getTokens: win.brc100Wallet.getTokens?.bind(win.brc100Wallet),
-        } as WalletClientExtended);
-        setPubKey(key);
-        setIsConnected(true);
-        setLastMessage("Connected to BRC-100 Wallet");
-        return;
-      } catch (e) {
-        console.error("BRC-100 Wallet connection failed:", e);
-      }
-    }
+      const key = await win.brc100Wallet.connect();
 
-    // No wallet found
-    setLastMessage("No wallet detected");
-    alert("Please install BSV Desktop Wallet, Metanet Client, or a BRC-100 wallet.");
-  };
+      console.log("BRC-100 Wallet connected, pubkey:", key);
+      
+
+      setWallet({
+        sign: win.brc100Wallet.sign.bind(win.brc100Wallet),
+        pay: win.brc100Wallet.pay?.bind(win.brc100Wallet),
+        disconnect: win.brc100Wallet.disconnect?.bind(win.brc100Wallet),
+        getTokens: win.brc100Wallet.getTokens?.bind(win.brc100Wallet),
+        identityKey: key,
+      });
+
+      setPubKey(key);
+      setIsConnected(true);
+      setLastMessage("Connected to BRC-100 Wallet");
+
+      return;
+    }
+  } catch (e) {
+    console.error("BRC-100 Wallet connection failed:", e);
+  }
+
+  // ----------------------------------------------------
+  // 4. NONE FOUND
+  // ----------------------------------------------------
+  setLastMessage("No compatible wallet detected");
+  alert(
+    "No wallet detected.\nInstall BSV Desktop Wallet or Metanet Client.\n\nBSV Desktop Wallet: https://desktop.bsvb.tech"
+  );
+};
 
 
   return (
