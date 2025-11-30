@@ -16,7 +16,7 @@ const Records: React.FC = () => {
     <div className="p-6">
       {!pubKey ? (
         <button
-          onClick={connectWallet}
+          onClick={() => connectWallet() }
           className="bg-purple-600 text-white px-4 py-2 rounded"
         >
           Connect Wallet
