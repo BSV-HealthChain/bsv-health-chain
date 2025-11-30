@@ -22,10 +22,17 @@ const SubmitData: React.FC = () => {
       setIsSubmitting(true);
 
       // PAYMENT
-      const { txid, rawTx } = await wallet.pay({
-        satoshis: SATOSHIS_TO_PAY,
-        to: RECEIVING_ADDRESS
-      });
+      const payResult = await wallet.pay?.({
+  satoshis: SATOSHIS_TO_PAY,
+  to: RECEIVING_ADDRESS
+});
+
+if (!payResult) {
+  throw new Error("This wallet does not support pay() method.");
+}
+
+const { txid, rawTx } = payResult;
+
 
       // HASH
       const formHash = sha256Hex(JSON.stringify(data));
@@ -48,7 +55,7 @@ const SubmitData: React.FC = () => {
     <div className="p-6">
       {!isConnected ? (
   <button
-    onClick={connectWallet}
+    onClick={() => connectWallet() }
     className="bg-purple-600 text-white px-4 py-2 rounded"
   >
     Connect BSV Wallet

@@ -42,7 +42,7 @@ const ProviderDashboard: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <button
-          onClick={connectWallet}
+          onClick={() => connectWallet() }
           className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-md transition"
         >
           Connect Wallet
