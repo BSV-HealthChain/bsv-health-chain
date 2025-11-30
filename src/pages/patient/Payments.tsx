@@ -20,48 +20,51 @@ const Payments: React.FC = () => {
   }, [pubKey]);
 
   const handlePay = async (invoice: any) => {
-    if (!wallet) {
-      alert("Connect your wallet first");
-      return;
-    }
+  if (!wallet) {
+    alert("Connect your wallet first");
+    return;
+  }
 
-    setLoading(true);
+  if (!wallet.createAction) {
+    alert("This wallet does not support createAction()");
+    return;
+  }
 
-    try {
-      // Create BSV payment transaction
-      const tx = await wallet.createAction({
-        description: "Pay medical invoice",
-        outputs: [
-          {
-            satoshis: invoice.amount,
-            lockingScript: invoice.providerId,
-            outputDescription: "Invoice payment"
-          }
-        ]
-      });
+  setLoading(true);
 
-       console.log("Transaction created:", tx);
+  try {
+    const tx = await wallet.createAction({
+      description: "Pay medical invoice",
+      outputs: [
+        {
+          satoshis: invoice.amount,
+          lockingScript: invoice.providerId,
+          outputDescription: "Invoice payment"
+        }
+      ]
+    });
 
-      // Mark invoice as paid in backend
-      await fetch(`/api/invoice/paid/${invoice._id}`, {
-        method: "PATCH"
-      });
+    console.log("Transaction created:", tx);
 
-      setSuccess("Payment successful!");
-      fetchInvoices(); // refresh list
-    } catch (error) {
-      console.error(error);
-      alert("Payment failed");
-    }
+    await fetch(`/api/invoice/paid/${invoice._id}`, {
+      method: "PATCH"
+    });
 
-    setLoading(false);
-  };
+    setSuccess("Payment successful!");
+    fetchInvoices();
+  } catch (error) {
+    console.error(error);
+    alert("Payment failed");
+  }
+
+  setLoading(false);
+};
 
   return (
     <div className="p-6">
       {!pubKey ? (
         <button
-          onClick={connectWallet}
+          onClick={() => connectWallet() }
           className="bg-purple-600 text-white px-4 py-2 rounded"
         >
           Connect Wallet
