@@ -1,6 +1,6 @@
 // src/context/walletContext.tsx
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { WalletClient, type SignActionResult, Transaction, PrivateKey } from "@bsv/sdk";
+import { type SignActionResult, PrivateKey } from "@bsv/sdk";
 import UnifiedWalletModal from "../components/UnifiedWalletModal";
 
 // Local wallet helpers you provided earlier (adjust names if your file differs)
@@ -89,7 +89,7 @@ export interface WalletContextType {
   setPassword?: (p: string) => void;
 
   // connection
-  connectWallet: (preferred?: WalletKind) => Promise<void>;
+  connectWallet: (preferred?: WalletKind) => Promise<string | null >;
   disconnect: () => void;
   openWalletModal: () => void;
 
@@ -183,191 +183,106 @@ export const WalletProvider : React.FC<{ children: React.ReactNode }> = ({ child
   /* -----------------------------
      Provider connection helpers
      ----------------------------- */
-  const tryConnectProvider = async (kind: WalletKind): Promise<boolean> => {
-    const win: any = window;
 
+  // Public connect function
+const connectWallet = async (preferred?: WalletKind): Promise<string | null> => {
+  setLastMessage("Connecting to wallet...");
+  const win: any = window;
+  let walletKey: string | null = null;
+
+  // Helper to try connecting a provider
+  const tryProvider = async (kind: WalletKind): Promise<boolean> => {
     try {
-      if (kind === "desktop") {
-        if (win.bsvDesktop || win.bsvdesktop || win.BsvDesktop) {
-          const desktopWallet = new WalletClient();
+      switch (kind) {
+        case "desktop":
+          if (!win.bsvDesktop) return false;
+          await win.bsvDesktop.waitForAuthentication(); // pops up login
+          walletKey = win.bsvDesktop.getPublicKey?.() || null;
+          break;
 
-// Wait for auth
-await desktopWallet.waitForAuthentication();
+        case "metanet":
+          if (!win.metanetWallet) return false;
+          walletKey = await win.metanetWallet.getPublicKey?.();
+          break;
 
-// Extract identity key
-const identityKey = desktopWallet.getPublicKey({identityKey:true}).toString();
+        case "brc100":
+          if (!win.brc100Wallet) return false;
+          walletKey = await win.brc100Wallet.getPublicKey?.();
+          break;
 
-// Store a fully compatible WalletClientExtended
-const extendedWallet: WalletClientExtended = {
-  // Include all required WalletClientExtended fields
-  ...desktopWallet,   // spread original wallet (substrate, connectToSubstrate, etc.)
+        case "local":
+          const local = localStorage.getItem(LOCAL_KEY);
+          if (!local) return false;
 
-  identityKey,        // your extra field
+          const parsed = JSON.parse(local);
+          const enc = new TextEncoder();
+          const data = enc.encode(parsed.privateHex);
+          const hash = await crypto.subtle.digest("SHA-256", data);
+          const pubHex = Array.from(new Uint8Array(hash))
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
 
-  sign: async (txHex: string): Promise<SignActionResult> => {
-  const unsignedTx = Transaction.fromHex(txHex);
-  const base64Ref = unsignedTx.toString();
+          const localWallet: WalletClientExtended = {
+            identityKey: pubHex,
+            sign: async (tx: string) => {
+              const pwd = prompt("Enter password to sign");
+              if (!pwd) throw new Error("Password required");
+              const signedHex = await signTxRaw(tx, pwd);
+              const signedBytes: number[] = signedHex.match(/.{2}/g)!.map((b) => parseInt(b, 16));
+              return { tx: signedBytes };
+            },
+            pay: async ({ satoshis, to }) => {
+              const pwd = prompt("Enter password to pay");
+              if (!pwd) throw new Error("Password required");
+              return sendPayment(to, satoshis, pwd);
+            },
+          };
 
-  const result = await desktopWallet.signAction({
-    reference: base64Ref,
-    spends: {
-      10: {
-        unlockingScript: "" // provide actual unlockingScript if needed
+          setWallet(localWallet);
+          walletKey = pubHex;
+          break;
       }
-    }
-  });
 
-  return result; // ✅ return SignActionResult, not string
-},
-
-};
-
-// Save it
-setWallet(extendedWallet);
-setPubKey(identityKey);
+      if (walletKey) {
+        setPubKey(walletKey);
         setIsConnected(true);
-        rememberProvider("desktop");
-        setLastMessage("Connected to BSV Desktop Wallet");
+        rememberProvider(kind);
+        setLastMessage(`Connected via ${kind}`);
         return true;
       }
-
-      return false;
-    } 
-
-      if (kind === "metanet") {
-        if (win.metanetClient?.connect) {
-          const key = await win.metanetClient.connect();
-          setWallet({
-            sign: win.metanetClient.sign?.bind(win.metanetClient),
-            pay: win.metanetClient.pay?.bind(win.metanetClient),
-            disconnect: win.metanetClient.disconnect?.bind(win.metanetClient),
-            getTokens: win.metanetClient.getTokens?.bind(win.metanetClient),
-            identityKey: key,
-          } as WalletClientExtended);
-          setPubKey(key);
-          setIsConnected(true);
-          rememberProvider("metanet");
-          setLastMessage("Connected to Metanet Client");
-          return true;
-        }
-        return false;
-      }
-
-      if (kind === "brc100") {
-        if (win.brc100Wallet?.connect) {
-          const key = await win.brc100Wallet.connect();
-          setWallet({
-            sign: win.brc100Wallet.sign?.bind(win.brc100Wallet),
-            pay: win.brc100Wallet.pay?.bind(win.brc100Wallet),
-            disconnect: win.brc100Wallet.disconnect?.bind(win.brc100Wallet),
-            getTokens: win.brc100Wallet.getTokens?.bind(win.brc100Wallet),
-            identityKey: key,
-          } as WalletClientExtended);
-          setPubKey(key);
-          setIsConnected(true);
-          rememberProvider("brc100");
-          setLastMessage("Connected to BRC-100 Wallet");
-          return true;
-        }
-        return false;
-      }
     } catch (err) {
-      console.warn("tryConnectProvider error", kind, err);
+      console.warn(`Failed to connect ${kind} wallet:`, err);
     }
     return false;
   };
 
-  // Public connect function
-  const connectWallet = async (preferred?: WalletKind) => {
-    setLastMessage("Connecting to wallet...");
-    const win: any = window;
+  // 1️⃣ Preferred wallet first
+  if (preferred && (await tryProvider(preferred))) return walletKey;
 
-    // if preferred specified, try it first
-    if (preferred) {
-      const ok = await tryConnectProvider(preferred);
-      if (ok) return;
-    }
+  // 2️⃣ Restore last provider
+  const last = (localStorage.getItem(LAST_PROVIDER_KEY) as WalletKind) || null;
+  if (last && (await tryProvider(last))) return walletKey;
 
-    // session restore
-    const last = (localStorage.getItem(LAST_PROVIDER_KEY) as WalletKind) || null;
-    if (last) {
-      const ok = await tryConnectProvider(last);
-      if (ok) return;
-    }
+  // 3️⃣ Try Desktop retries for bridge
+  for (let i = 0; i < 5; i++) {
+    if (await tryProvider("desktop")) return walletKey;
+    await new Promise((r) => setTimeout(r, 500));
+  }
 
-    // Desktop retry loop (in case extension injects after load)
-    const tryDesktopWithRetries = async () => {
-      for (let i = 0; i < 5; i++) {
-        if (win.bsvDesktop || win.bsvdesktop || win.BsvDesktop) {
-          const ok = await tryConnectProvider("desktop");
-          if (ok) return true;
-        }
-        await new Promise((r) => setTimeout(r, 300));
-      }
-      return false;
-    };
-    const desktopOk = await tryDesktopWithRetries();
-    if (desktopOk) return;
+  // 4️⃣ Try Metanet and BRC-100
+  if (await tryProvider("metanet")) return walletKey;
+  if (await tryProvider("brc100")) return walletKey;
 
-    // Metanet
-    const metanetOk = await tryConnectProvider("metanet");
-    if (metanetOk) return;
+  // 5️⃣ Local wallet fallback
+  if (await tryProvider("local")) return walletKey;
 
-    // BRC-100
-    const brcOk = await tryConnectProvider("brc100");
-    if (brcOk) return;
-
-    // attempt restore local wallet silently
-    const local = localStorage.getItem(LOCAL_KEY);
-    if (local) {
-      try {
-        const parsed = JSON.parse(local);
-        const enc = new TextEncoder();
-        const data = enc.encode(parsed.privateHex);
-        const hash = await crypto.subtle.digest("SHA-256", data);
-        const pubHex = Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
-
-        // localWallet uses signTxRaw/sendPayment helpers for real signing
-        const localWallet: WalletClientExtended = {
-  identityKey: pubHex,
-
-  sign: async (tx: string): Promise<SignActionResult> => {
-  const pwd = prompt("Enter wallet password to sign transaction");
-  if (!pwd) throw new Error("Password required");
-
-  const signedHex = await signTxRaw(tx, pwd); // hex string
-
-  // Convert hex → number[]
-  const signedBytes: number[] = signedHex
-    .match(/.{2}/g)!
-    .map((byte) => parseInt(byte, 16));
-
-  return { tx: signedBytes };  // ✔ correct type for SignActionResult
-},
-
-  pay: async ({ satoshis, to }) => {
-    const pwd = prompt("Enter wallet password to make payment");
-    if (!pwd) throw new Error("Password required");
-
-    return sendPayment(to, satoshis, pwd);
-  },
+  // 6️⃣ No wallet found → show modal
+  setLastMessage("No compatible wallet detected");
+  setShowModal(true);
+  return null;
 };
 
-        setWallet(localWallet);
-        setPubKey(pubHex);
-        setIsConnected(true);
-        rememberProvider("local");
-        setLastMessage("Restored local wallet session");
-        return;
-      } catch (err) {
-        console.warn("Failed to restore local wallet", err);
-      }
-    }
 
-    // Show modal to let user create/import/connect
-    setLastMessage("No compatible wallet detected");
-    setShowModal(true);
-  };
 
   /* -----------------------------
      Local wallet management helpers (expose in context)
@@ -694,55 +609,7 @@ setPubKey(identityKey);
     setLastMessage("Wallet disconnected");
   };
 
-  /* -----------------------------
-     Auto reconnect attempt on mount (session restore)
-     ----------------------------- */
-  useEffect(() => {
-    (async () => {
-      const last = (localStorage.getItem(LAST_PROVIDER_KEY) as WalletKind) || null;
-      if (last) {
-        try {
-          await connectWallet(last);
-        } catch (err) {
-          console.warn("Auto reconnect failed", err);
-        }
-      } else {
-        // attempt silent local restore
-        const local = localStorage.getItem(LOCAL_KEY);
-        if (local) {
-          try {
-            const parsed = JSON.parse(local);
-            const enc = new TextEncoder();
-            const data = enc.encode(parsed.privateHex);
-            const hash = await crypto.subtle.digest("SHA-256", data);
-            const pubHex = Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
-            // set demo local wallet that delegates signing to helpers
-            setWallet({
-              identityKey: pubHex,
-              sign: async (tx) => {
-                const pwd = prompt("Enter wallet password to sign transaction");
-                if (!pwd) throw new Error("Password required");
-                return signTxRaw(tx, pwd);
-              },
-              pay: async ({ satoshis, to }) => {
-                const pwd = prompt("Enter wallet password to pay");
-                if (!pwd) throw new Error("Password required");
-                return sendPayment(to, satoshis, pwd);
-              },
-            } as WalletClientExtended);
-            setPubKey(pubHex);
-            setIsConnected(true);
-            rememberProvider("local");
-            setLastMessage("Restored local wallet session");
-          } catch {
-            // ignore restore errors
-          }
-        }
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+  
   /* -----------------------------
      Unified modal handler (used by UI)
      ----------------------------- */

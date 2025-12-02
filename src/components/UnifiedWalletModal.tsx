@@ -23,7 +23,7 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
   onClose,
   onConnected,
 }) => {
-  const { connectWallet, pubKey: externalPubKey } = useWallet();
+  const { connectWallet } = useWallet();
   const [tab, setTab] = useState<"external" | "local">("external");
 
   // Local wallet states
@@ -113,9 +113,22 @@ setBalances(map);
 
   // ------------------- External Wallet Handler -------------------
   const handleExternalConnect = async () => {
-    await connectWallet();
-    if (externalPubKey) onConnected(externalPubKey, "external");
-  };
+  try {
+    const pubKey = await connectWallet(); // WalletContext handles providers internally
+    if (pubKey) {
+      onConnected(pubKey, "external");
+    } else {
+      console.error("No public key returned from connectWallet");
+      alert("Wallet connection failed. Check console for details.");
+    }
+  } catch (err) {
+    console.error("Failed to connect wallet:", err);
+    alert("Wallet connection failed. See console for details.");
+  }
+};
+
+
+
 
   // ------------------- Auto-refresh balances every 15s -------------------
   useEffect(() => {
