@@ -12,7 +12,21 @@ const WalletButton: React.FC = () => {
           <button onClick={disconnect}>Disconnect</button>
         </>
       ) : (
-        <button onClick={() => connectWallet()}>Connect Wallet</button>
+        <button
+  onClick={async () => {
+    try {
+      console.log("Connect wallet button clicked");
+      await connectWallet("desktop"); // or omit param to auto-detect
+      console.log("connectWallet finished");
+    } catch (err) {
+      console.error("Wallet connection failed:", err);
+      alert("Wallet connection failed. See console for details.");
+    }
+  }}
+>
+  Connect Wallet
+</button>
+
       )}
     </div>
   );
