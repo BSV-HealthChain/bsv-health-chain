@@ -46,13 +46,8 @@ We welcome contributions!
 
 Please read **[CONTRIBUTING.md](CONTRIBUTING.md)** before submitting pull requests.
 
-### Quick Start
-
-1. Read **CONTRIBUTING.md**  
-2. Create a branch from `develop`  
-3. Follow commit message guidelines  
-4. Submit a Pull Request with a clear description  
-
----
-
-
+### Quick Start develop
+1. Read [CONTRIBUTING.md](CONTRIBUTING.md)
+2. Create branch from `develop`
+3. Follow commit guidelines
+4. Submit PR with description
