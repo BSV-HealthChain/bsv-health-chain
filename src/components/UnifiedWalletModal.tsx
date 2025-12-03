@@ -1,4 +1,3 @@
-// src/components/UnifiedWalletModal.tsx
 import React, { useState, useEffect } from "react";
 import { useWallet } from "../context/WalletContext";
 import {
@@ -24,17 +23,18 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
   onConnected,
 }) => {
   const { connectWallet } = useWallet();
-  const [tab, setTab] = useState<"external" | "local">("external");
 
-  // Local wallet states
+  // Unified mode for showing first wallet selection
   type Mode =
+    | "choose-wallet"
     | "menu"
     | "create"
     | "import"
     | "unlock"
     | "create-mnemonic"
     | "import-mnemonic";
-  const [mode, setMode] = useState<Mode>("menu");
+
+  const [mode, setMode] = useState<Mode>("choose-wallet");
   const [password, setPassword] = useState("");
   const [wif, setWif] = useState("");
   const [mnemonic, setMnemonic] = useState("");
@@ -45,28 +45,23 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
   // ------------------- Local Wallet Handlers -------------------
   const refreshLocalBalances = async () => {
     const priv = localStorage.getItem("localWalletPrivkey");
-if (!priv) return; // wallet not unlocked yet
-const addrs = await getLocalWalletAddresses(priv);
+    if (!priv) return;
+    const addrs = await getLocalWalletAddresses(priv);
     setAddresses(addrs);
+
     const raw = await getWalletTokenBalances(addrs);
-
-// Convert array → dictionary
-const map: Record<string, Record<string, number>> = {};
-
-raw.forEach(item => {
-  const addr = item.address;
-
-  map[addr] = {
-    bsv: Number(item.confirmed) || 0,
-    sats: Number(item.total) || 0,
-    usd: item.USD ?? 0,
-    eur: item.EUR ?? 0,
-    gbp: item.GBP ?? 0,
-  };
-});
-
-setBalances(map);
-
+    const map: Record<string, Record<string, number>> = {};
+    raw.forEach((item) => {
+      const addr = item.address;
+      map[addr] = {
+        bsv: Number(item.confirmed) || 0,
+        sats: Number(item.total) || 0,
+        usd: item.USD ?? 0,
+        eur: item.EUR ?? 0,
+        gbp: item.GBP ?? 0,
+      };
+    });
+    setBalances(map);
   };
 
   const handleCreateWIF = async () => {
@@ -107,30 +102,27 @@ setBalances(map);
   };
 
   const handleExportPDF = () => {
-  const [pubKey] = useState<string>("");
-    exportWalletPDF( mnemonic, pubKey, addresses );
+    const pubKey = localStorage.getItem("localWalletPubkey") ?? "";
+    exportWalletPDF(mnemonic, pubKey, addresses);
   };
 
   // ------------------- External Wallet Handler -------------------
   const handleExternalConnect = async () => {
-  try {
-    const pubKey = await connectWallet(); // WalletContext handles providers internally
-    if (pubKey) {
-      onConnected(pubKey, "external");
-    } else {
-      console.error("No public key returned from connectWallet");
-      alert("Wallet connection failed. Check console for details.");
+    try {
+      const pubKey = await connectWallet();
+      if (pubKey) {
+        onConnected(pubKey, "external");
+      } else {
+        console.error("No public key returned from connectWallet");
+        alert("Wallet connection failed. Check console for details.");
+      }
+    } catch (err) {
+      console.error("Failed to connect wallet:", err);
+      alert("Wallet connection failed. See console for details.");
     }
-  } catch (err) {
-    console.error("Failed to connect wallet:", err);
-    alert("Wallet connection failed. See console for details.");
-  }
-};
+  };
 
-
-
-
-  // ------------------- Auto-refresh balances every 15s -------------------
+  // ------------------- Auto-refresh balances -------------------
   useEffect(() => {
     if (addresses.length > 0) {
       const interval = setInterval(refreshLocalBalances, 15000);
@@ -141,79 +133,61 @@ setBalances(map);
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl w-full max-w-lg p-6 overflow-y-auto max-h-[90vh]">
-        {/* Tabs */}
-        <div className="flex justify-center mb-4">
-          <button
-            className={`px-4 py-2 rounded-t-lg font-semibold ${
-              tab === "external" ? "bg-blue-600 text-white" : "bg-gray-200"
-            }`}
-            onClick={() => setTab("external")}
-          >
-            External Wallet
-          </button>
-          <button
-            className={`px-4 py-2 rounded-t-lg font-semibold ${
-              tab === "local" ? "bg-green-600 text-white" : "bg-gray-200"
-            }`}
-            onClick={() => setTab("local")}
-          >
-            Local Wallet
-          </button>
-        </div>
-
-        {/* Tab Content */}
-        {tab === "external" && (
+        {/* ------------------- Unified Wallet Selection ------------------- */}
+        {mode === "choose-wallet" && (
           <div className="flex flex-col gap-3">
-            <h2 className="text-lg font-bold mb-2">Connect External Wallet</h2>
+            <h2 className="text-lg font-bold mb-2 text-center">Connect Wallet</h2>
             <button
-              onClick={handleExternalConnect}
               className="w-full p-3 bg-blue-600 text-white rounded"
+              onClick={handleExternalConnect}
             >
               Connect BSV Wallet (Desktop / Metanet / BRC-100)
+            </button>
+            <button
+              className="w-full p-3 bg-green-600 text-white rounded"
+              onClick={() => setMode("create")}
+            >
+              Create Local Wallet (WIF)
+            </button>
+            <button
+              className="w-full p-3 bg-yellow-600 text-white rounded"
+              onClick={() => setMode("import")}
+            >
+              Import Local Wallet (WIF)
+            </button>
+            <button
+              className="w-full p-3 bg-gray-700 text-white rounded"
+              onClick={() => setMode("unlock")}
+            >
+              Unlock Local Wallet
+            </button>
+            <button
+              className="w-full p-3 bg-purple-600 text-white rounded"
+              onClick={() => setMode("create-mnemonic")}
+            >
+              Create Mnemonic Wallet
+            </button>
+            <button
+              className="w-full p-3 bg-orange-600 text-white rounded"
+              onClick={() => setMode("import-mnemonic")}
+            >
+              Import Mnemonic Wallet
             </button>
           </div>
         )}
 
-        {tab === "local" && (
+        {/* ------------------- Local Wallet Flows ------------------- */}
+        {mode !== "choose-wallet" && (
           <div className="flex flex-col gap-3">
-            {/* Menu */}
-            {mode === "menu" && (
-              <>
-                <h2 className="text-lg font-bold mb-2">Local Wallet</h2>
-                <button
-                  className="w-full p-3 bg-green-600 text-white rounded"
-                  onClick={() => setMode("create")}
-                >
-                  Create Wallet (WIF)
-                </button>
-                <button
-                  className="w-full p-3 bg-yellow-600 text-white rounded"
-                  onClick={() => setMode("import")}
-                >
-                  Import Wallet (WIF)
-                </button>
-                <button
-                  className="w-full p-3 bg-purple-600 text-white rounded"
-                  onClick={() => setMode("create-mnemonic")}
-                >
-                  Create Mnemonic Wallet
-                </button>
-                <button
-                  className="w-full p-3 bg-orange-600 text-white rounded"
-                  onClick={() => setMode("import-mnemonic")}
-                >
-                  Import Mnemonic Wallet
-                </button>
-                <button
-                  className="w-full p-3 bg-gray-700 text-white rounded"
-                  onClick={() => setMode("unlock")}
-                >
-                  Unlock Existing Wallet
-                </button>
-              </>
-            )}
+            {/* Back button */}
+            <button
+              className="text-blue-600 underline mb-2"
+              onClick={() => setMode("choose-wallet")}
+            >
+              ← Back to Wallet Selection
+            </button>
 
-            {/* Create / Import / Unlock WIF */}
+            {/* Create / Import / Unlock / Mnemonic flows */}
             {mode === "create" && (
               <>
                 <h3 className="text-lg font-semibold">Create Wallet</h3>
@@ -277,7 +251,6 @@ setBalances(map);
               </>
             )}
 
-            {/* Mnemonic Flows */}
             {mode === "create-mnemonic" && (
               <>
                 <h3 className="text-lg font-bold mb-3">Create Mnemonic Wallet</h3>
@@ -333,7 +306,7 @@ setBalances(map);
               </>
             )}
 
-            {/* Show local wallet addresses & multi-token balances */}
+            {/* Show local wallet addresses & balances */}
             {addresses.length > 0 && (
               <div className="mt-4 p-3 bg-gray-100 rounded overflow-x-auto">
                 <h4 className="font-semibold mb-2">Addresses & Balances</h4>
@@ -372,6 +345,7 @@ setBalances(map);
           </div>
         )}
 
+        {/* Close Modal */}
         <button
           onClick={onClose}
           className="mt-4 w-full p-2 text-red-500 underline rounded"
