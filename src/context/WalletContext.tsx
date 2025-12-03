@@ -1,13 +1,12 @@
-// src/context/walletContext.tsx
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { type SignActionResult, PrivateKey } from "@bsv/sdk";
+import { type SignActionResult, PrivateKey, WalletClient } from "@bsv/sdk";
 import UnifiedWalletModal from "../components/UnifiedWalletModal";
 
-// Local wallet helpers you provided earlier (adjust names if your file differs)
+// Local wallet helpers 
 import {
   signTxRaw,
   sendPayment,
-  // optional: helpers for mnemonic/local wallets
+  // helpers for mnemonic/local wallets
   getLocalWalletAddresses,
   createMnemonicWallet,
   importMnemonicWallet,
@@ -22,52 +21,33 @@ import {
 type WalletKind = "desktop" | "metanet" | "brc100" | "local";
 
 interface LocalWallet {
-  priv: string;      // private key in hex or WIF
-  pubkey: string;    // public key
-  wif: string;       // optional WIF representation
+  priv: string;      
+  pubkey: string;    
+  wif: string;      
 }
 
-
-export interface Token {
-  /** Unique identifier for the token (e.g., token ID or genesis transaction hash) */
+export interface Token {  
   id: string;
-
-  /** Symbol or shorthand for the token, e.g., "BRV" */
   symbol: string;
-
-  /** Full display name of the token */
   name: string;
-
-  /** Total amount of this token owned by the wallet (in satoshis or token units) */
   balance: number;
-
-  /** Decimal precision for the token (e.g., 0 for whole tokens, 8 for satoshi-like) */
   decimals: number;
-
-  /** Optional metadata URL for token information (JSON, image, etc.) */
   metadataUrl?: string;
-
-  /** Optional type: "fungible" | "non-fungible" */
   type?: "fungible" | "non-fungible";
 }
 
-
-
 export interface WalletClientExtended {
+  [x: string]: any;
   identityKey: string;
-
-  // minimal subset you actually implement
   sign: (txHex: string) => Promise<SignActionResult>;
   
   pay?: (params: { satoshis: number; to: string }) => Promise<any>;
-  getTokens?: () => Promise<Token[]>; // add this
-
-  // Optional SDK methods (not required, but allowed)
+  getTokens?: () => Promise<Token[]>;
   substrate?: any;
   connectToSubstrate?: () => Promise<void>;
   createAction?: (...args: any[]) => Promise<any>;
   signAction?: (...args: any[]) => Promise<any>;
-  disconnect?: () => void; // <-- add this
+  disconnect?: () => void;
 }
 
 
@@ -104,13 +84,12 @@ export interface WalletContextType {
   sign: (txHex: string) => Promise<SignActionResult>;
   pay: (params: { satoshis: number; to: string }) => Promise<{ txid: string; rawTx: string }>;
 
-  // balances
   balances: Record<string, Balances>; // keyed by address
   refreshBalances: () => Promise<void>;
 
   // UI helpers
   setLastMessage: React.Dispatch<React.SetStateAction<string | null>>;
-  localWallet?: LocalWallet | null;  // <-- store private info here
+  localWallet?: LocalWallet | null;  // storage for private info
 }
 
 const WalletContext = createContext<WalletContextType>({} as WalletContextType);
@@ -121,7 +100,6 @@ const WalletContext = createContext<WalletContextType>({} as WalletContextType);
 
 const LOCAL_KEY = "bsv_local_wallet_v1";
 const LAST_PROVIDER_KEY = "bsv_last_provider_v1";
-
 
 /* -----------------------------
    Helper: fetch fiat rates (Coingecko)
@@ -170,10 +148,8 @@ export const WalletProvider : React.FC<{ children: React.ReactNode }> = ({ child
   const [showModal, setShowModal] = useState(false);
   const [_localWallet, setLocalWallet] = useState<LocalWallet | null>(null);
 
-  // balances keyed by address
   const [balances, setBalances] = useState<Record<string, Balances>>({});
 
-  // small helper to persist provider selection
   const rememberProvider = (p: WalletKind | null) => {
     setLastProvider(p);
     if (p) localStorage.setItem(LAST_PROVIDER_KEY, p);
@@ -184,113 +160,80 @@ export const WalletProvider : React.FC<{ children: React.ReactNode }> = ({ child
      Provider connection helpers
      ----------------------------- */
 
-  // Public connect function
-const connectWallet = async (preferred?: WalletKind): Promise<string | null> => {
-  setLastMessage("Connecting to wallet...");
+// Public connect function
+const connectWalletByType = async (type: WalletKind): Promise<string | null> => {
   const win: any = window;
   let walletKey: string | null = null;
 
-  // Helper to try connecting a provider
-  const tryProvider = async (kind: WalletKind): Promise<boolean> => {
+  if (type === "desktop") {
     try {
-      switch (kind) {
-        case "desktop":
-          if (!win.bsvDesktop) return false;
-          await win.bsvDesktop.waitForAuthentication(); // pops up login
-          walletKey = win.bsvDesktop.getPublicKey?.() || null;
-          break;
-
-        case "metanet":
-          if (!win.metanetWallet) return false;
-          walletKey = await win.metanetWallet.getPublicKey?.();
-          break;
-
-        case "brc100":
-          if (!win.brc100Wallet) return false;
-          walletKey = await win.brc100Wallet.getPublicKey?.();
-          break;
-
-        case "local":
-          const local = localStorage.getItem(LOCAL_KEY);
-          if (!local) return false;
-
-          const parsed = JSON.parse(local);
-          const enc = new TextEncoder();
-          const data = enc.encode(parsed.privateHex);
-          const hash = await crypto.subtle.digest("SHA-256", data);
-          const pubHex = Array.from(new Uint8Array(hash))
-            .map((b) => b.toString(16).padStart(2, "0"))
-            .join("");
-
-          const localWallet: WalletClientExtended = {
-            identityKey: pubHex,
-            sign: async (tx: string) => {
-              const pwd = prompt("Enter password to sign");
-              if (!pwd) throw new Error("Password required");
-              const signedHex = await signTxRaw(tx, pwd);
-              const signedBytes: number[] = signedHex.match(/.{2}/g)!.map((b) => parseInt(b, 16));
-              return { tx: signedBytes };
-            },
-            pay: async ({ satoshis, to }) => {
-              const pwd = prompt("Enter password to pay");
-              if (!pwd) throw new Error("Password required");
-              return sendPayment(to, satoshis, pwd);
-            },
-          };
-
-          setWallet(localWallet);
-          walletKey = pubHex;
-          break;
-      }
-
-      if (walletKey) {
-        setPubKey(walletKey);
-        setIsConnected(true);
-        rememberProvider(kind);
-        setLastMessage(`Connected via ${kind}`);
-        return true;
+      const desktopWallet = new WalletClient() as unknown as WalletClientExtended;
+      await desktopWallet.waitForAuthentication();
+      if (desktopWallet.identityKey) {
+        setWallet(desktopWallet);
+        walletKey = desktopWallet.identityKey;
       }
     } catch (err) {
-      console.warn(`Failed to connect ${kind} wallet:`, err);
+      console.warn("BSV Desktop Wallet not available:", err);
     }
-    return false;
-  };
-
-  // 1️⃣ Preferred wallet first
-  if (preferred && (await tryProvider(preferred))) return walletKey;
-
-  // 2️⃣ Restore last provider
-  const last = (localStorage.getItem(LAST_PROVIDER_KEY) as WalletKind) || null;
-  if (last && (await tryProvider(last))) return walletKey;
-
-  // 3️⃣ Try Desktop retries for bridge
-  for (let i = 0; i < 5; i++) {
-    if (await tryProvider("desktop")) return walletKey;
-    await new Promise((r) => setTimeout(r, 500));
+  } else if (type === "metanet") {
+    try {
+      await win.metanet.waitForAuthentication();
+      walletKey = win.metanet.getPublicKey?.();
+      if (walletKey) {
+        setWallet({
+          identityKey: walletKey,
+          sign: win.metanet.sign.bind(win.metanet),
+          pay: win.metanet.pay?.bind(win.metanet),
+        } as WalletClientExtended);
+      }
+    } catch (err) {
+      console.warn("Metanet Wallet failed", err);
+    }
+  } else if (type === "local") {
+    const local = localStorage.getItem(LOCAL_KEY);
+    if (local) {
+      const parsed = JSON.parse(local);
+      const enc = new TextEncoder();
+      const hash = await crypto.subtle.digest("SHA-256", enc.encode(parsed.privateHex));
+      walletKey = Array.from(new Uint8Array(hash))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+      setWallet({
+        identityKey: walletKey,
+        sign: async (tx) => {
+          const pwd = prompt("Enter wallet password to sign transaction");
+          if (!pwd) throw new Error("Password required");
+          const signedHex = await signTxRaw(tx, pwd);
+          return { tx: signedHex.match(/.{2}/g)!.map((b) => parseInt(b, 16)) };
+        },
+        pay: async ({ satoshis, to }) => {
+          const pwd = prompt("Enter wallet password to pay");
+          if (!pwd) throw new Error("Password required");
+          return sendPayment(to, satoshis, pwd);
+        },
+      } as WalletClientExtended);
+    }
   }
 
-  // 4️⃣ Try Metanet and BRC-100
-  if (await tryProvider("metanet")) return walletKey;
-  if (await tryProvider("brc100")) return walletKey;
+  if (walletKey) {
+    setPubKey(walletKey);
+    setIsConnected(true);
+    rememberProvider(type);
+    setLastMessage(`${type} wallet connected`);
+  } else {
+    setLastMessage(`${type} wallet connection failed`);
+  }
 
-  // 5️⃣ Local wallet fallback
-  if (await tryProvider("local")) return walletKey;
-
-  // 6️⃣ No wallet found → show modal
-  setLastMessage("No compatible wallet detected");
-  setShowModal(true);
-  return null;
+  await refreshBalances();
+  return walletKey;
 };
-
-
 
   /* -----------------------------
      Local wallet management helpers (expose in context)
-     - these wrap your wallet/localWallet helpers (if available)
      ----------------------------- */
 
   const createLocalWallet = async (password?: string): Promise<LocalWallet> => {
-    // fallback to simple (insecure) create: generate pseudo private and store
     const rand = crypto.getRandomValues(new Uint8Array(32));
   const privHex = Array.from(rand).map(b => b.toString(16).padStart(2,"0")).join("");
   const enc = new TextEncoder();
@@ -301,9 +244,9 @@ const connectWallet = async (preferred?: WalletKind): Promise<string | null> => 
     if (typeof createLocalWalletHelper === "function") {
       const pub = await createLocalWalletHelper(password || "");
       const localWallet: LocalWallet = {
-        priv: "",      // fill from helper if available
+        priv: "",    
         pubkey: pub.wif,
-        wif: "",       // optional
+        wif: "",      
       };
       setWallet({
     identityKey: pubHex,
@@ -312,7 +255,7 @@ const connectWallet = async (preferred?: WalletKind): Promise<string | null> => 
 
   setPubKey(pubHex);
   setIsConnected(true);
-  setLocalWallet(localWallet);  // <-- assign to context
+  setLocalWallet(localWallet);  
   setLastMessage("Created demo local wallet (no signing).");
   return localWallet;
 };
@@ -356,19 +299,18 @@ const connectWallet = async (preferred?: WalletKind): Promise<string | null> => 
     const pwd = prompt("Enter wallet password to sign transaction");
     if (!pwd) throw new Error("Password required");
 
-    const signedHex = await signTxRaw(tx, pwd); // returns hex string
+    const signedHex = await signTxRaw(tx, pwd); 
 
-    // Convert hex string → number[]
     const signedBytes: number[] = signedHex
       .match(/.{2}/g)!
       .map((byte) => parseInt(byte, 16));
 
-    return { tx: signedBytes };  // SignActionResult expects number[]
+    return { tx: signedBytes };  
   },
   pay: async ({ satoshis, to }) => {
     const pwd = prompt("Enter wallet password to make payment");
     if (!pwd) throw new Error("Password required");
-    return sendPayment(to, satoshis, pwd); // call your helper directly
+    return sendPayment(to, satoshis, pwd); 
 } 
 } as WalletClientExtended);
 
@@ -408,7 +350,7 @@ const connectWallet = async (preferred?: WalletKind): Promise<string | null> => 
     if (typeof createMnemonicWallet === "function") {
       const { mnemonic, pubkey } = await createMnemonicWallet(password, length);
       setLastMessage("Mnemonic wallet created. Make sure to back up your seed.");
-      // set wallet wrapper using signTxRaw/sendPayment
+    
       setWallet({
         identityKey: pubkey,
         sign: async (tx) => {
@@ -477,15 +419,9 @@ const connectWallet = async (preferred?: WalletKind): Promise<string | null> => 
         try {
           const tokens = await wallet.getTokens();
           // tokens format varies by provider; we'll try to interpret common patterns:
-          // Example expected: [{ token: "BSV", balance: 0.001 }, { token: "USD", balance: 1.23 }, ... ]
-          // Fallback to attempt to map by symbol / name
           const mapped: Record<string, Balances> = {};
-
-          // if provider returns address-level balances, use them
           if (Array.isArray(tokens)) {
-            // attempt a simple mapping: token objects with address or symbol
             for (const t of tokens as any[]) {
-              // if provider returns address property, prefer that
               const addr = t.address || t.pubkey || pubKey || "unknown";
               const sym = (t.symbol || t.token || t.name || "").toString().toUpperCase();
 
@@ -502,12 +438,9 @@ const connectWallet = async (preferred?: WalletKind): Promise<string | null> => 
               } else if (["USD", "EUR", "GBP"].includes(sym)) {
                 mapped[addr][sym as keyof Balances] = Number(t.balance ?? t.amount ?? 0);
               } else {
-                // unknown token — ignore or store as extra (not in this structure)
               }
             }
           }
-
-          // if we didn't map anything meaningful, try to create a default entry for pubKey
           if (Object.keys(mapped).length === 0 && pubKey) {
             mapped[pubKey] = { bsv: 0, sats: 0 };
           }
@@ -517,16 +450,13 @@ const connectWallet = async (preferred?: WalletKind): Promise<string | null> => 
           return;
         } catch (e) {
           console.warn("wallet.getTokens() failed, fallback to WOC for local addresses", e);
-          // fallthrough to fallback
         }
       }
 
-      // 2) Otherwise fallback: local wallet addresses -> WOC + coingecko
-      // Try use getLocalWalletAddresses helper if available
       let addrs: string[] = [];
       if (typeof getLocalWalletAddresses === "function") {
         try {
-          const privateHex = "privateKeyHex"; // make sure this exists
+          const privateHex = "privateKeyHex"; 
 
           addrs = await getLocalWalletAddresses(privateHex);
         } catch (e) {
@@ -535,9 +465,7 @@ const connectWallet = async (preferred?: WalletKind): Promise<string | null> => 
         }
       }
 
-      // If no addresses from helper but we have a pubKey, try to derive a single address
       if (addrs.length === 0 && pubKey) {
-        // it's better to rely on wallet helper to derive addresses; as a fallback, attempt to treat pubKey as address
         addrs = [pubKey];
       }
 
@@ -577,7 +505,7 @@ const connectWallet = async (preferred?: WalletKind): Promise<string | null> => 
     return () => {
       if (interval) window.clearInterval(interval);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  
   }, [isConnected, wallet, pubKey]);
 
   /* -----------------------------
@@ -609,11 +537,17 @@ const connectWallet = async (preferred?: WalletKind): Promise<string | null> => 
     setLastMessage("Wallet disconnected");
   };
 
-  
   /* -----------------------------
      Unified modal handler (used by UI)
      ----------------------------- */
   const openWalletModal = () => setShowModal(true);
+
+  const connectWallet = async (): Promise<string | null> => {
+  // You can delegate to your modal handler
+  openWalletModal();
+  return null;
+};
+
 
   /* -----------------------------
      Context value
@@ -625,8 +559,8 @@ const connectWallet = async (preferred?: WalletKind): Promise<string | null> => 
       isConnected,
       lastProvider,
       lastMessage,
-
       connectWallet,
+      connectWalletByType,
       disconnect,
       openWalletModal,
 
@@ -653,7 +587,6 @@ const connectWallet = async (preferred?: WalletKind): Promise<string | null> => 
 
       setLastMessage,
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [pubKey, wallet, isConnected, lastProvider, lastMessage, balances]
   )
   return (
@@ -663,14 +596,11 @@ const connectWallet = async (preferred?: WalletKind): Promise<string | null> => 
         <UnifiedWalletModal
           onClose={() => setShowModal(false)}
           onConnected={async (connectedPubKey: string, type: "external" | "local") => {
-            // when the modal reports a local wallet connection, wire local signing to helpers
             setPassword("");
             setShowModal(false);
             setPubKey(connectedPubKey);
             setIsConnected(true);
             rememberProvider(type === "local" ? "local" : null);
-
-            // attach sign/pay wrappers for local wallet path
             if (type === "local") {
               setWallet({
                 identityKey: connectedPubKey,
@@ -691,7 +621,6 @@ const connectWallet = async (preferred?: WalletKind): Promise<string | null> => 
               setLastMessage("External wallet connected");
             }
 
-            // refresh balances right after connection
             await refreshBalances();
           }}
         />
