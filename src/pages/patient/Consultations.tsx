@@ -6,39 +6,47 @@ const Consultations: React.FC = () => {
   const [form, setForm] = useState({ providerId: "", message: "" });
   const [success, setSuccess] = useState("");
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pubKey) return;
 
-    const res = await fetch("/api/patient/consultation", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, pubKey }),
-    });
+    try {
+      const res = await fetch("/api/patient/consultation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, pubKey }),
+      });
 
-    const data = await res.json();
-setSuccess(`Consultation request sent! ID: ${data.requestId}`);
-
+      const data = await res.json();
+      setSuccess(`Consultation request sent! ID: ${data.requestId}`);
+      setForm({ providerId: "", message: "" }); // reset form
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send consultation request.");
+    }
   };
 
   return (
-    <div className="p-6">
+    <div className="max-w-md mx-auto p-6 bg-white shadow-md rounded-xl mt-6">
       {!pubKey ? (
         <button
-          onClick={() => connectWallet() }
-          className="bg-purple-600 text-white px-4 py-2 rounded"
+          onClick={() => connectWallet()}
+          className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium px-4 py-2 rounded transition"
         >
           Connect Wallet
         </button>
       ) : (
         <>
-          <h1 className="text-2xl font-bold mb-4">Consultation Request</h1>
+          <h1 className="text-2xl font-bold mb-4 text-center">Consultation Request</h1>
 
-          {success && <p className="text-green-600 mb-4">{success}</p>}
+          {success && (
+            <p className="text-green-600 mb-4 text-center font-medium">{success}</p>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
-              className="w-full p-2 border rounded"
+              type="text"
+              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="Provider ID"
               value={form.providerId}
               onChange={(e) => setForm({ ...form, providerId: e.target.value })}
@@ -46,14 +54,18 @@ setSuccess(`Consultation request sent! ID: ${data.requestId}`);
             />
 
             <textarea
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="Brief message"
               value={form.message}
               onChange={(e) => setForm({ ...form, message: e.target.value })}
+              rows={4}
               required
             />
 
-            <button className="bg-purple-600 text-white px-4 py-2 rounded">
+            <button
+              type="submit"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium px-4 py-2 rounded transition"
+            >
               Submit Request
             </button>
           </form>

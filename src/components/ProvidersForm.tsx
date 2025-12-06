@@ -23,7 +23,6 @@ interface ProviderFormProps {
   onSubmit: (data: ProviderFormData) => void | Promise<void>;
 }
 
-
 export const ProviderForm: React.FC<ProviderFormProps> = ({ onSubmit }) => {
   const [form, setForm] = useState<ProviderFormData>({
     name: "",
@@ -60,17 +59,19 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({ onSubmit }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-2xl shadow-xl">
-      <h2 className="text-2xl font-bold mb-6">Healthcare Provider Registration</h2>
-      {success && <p className="text-green-600 mb-4">{success}</p>}
+    <div className="max-w-md mx-auto p-6 bg-white rounded-2xl shadow-xl border border-gray-200">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+        Healthcare Provider Registration
+      </h2>
+      {success && <p className="text-green-600 mb-4 text-center">{success}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Name */}
         <div>
-          <label className="block mb-1">Name</label>
+          <label className="block text-gray-700 mb-1 font-medium">Name</label>
           <input
             type="text"
-            className="w-full border p-2 rounded"
+            className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400"
             value={form.name}
             onChange={(e) => handleChange("name", e.target.value)}
             required
@@ -79,9 +80,9 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({ onSubmit }) => {
 
         {/* Provider Type */}
         <div>
-          <label className="block mb-1">Provider Type</label>
+          <label className="block text-gray-700 mb-1 font-medium">Provider Type</label>
           <select
-            className="w-full border p-2 rounded"
+            className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400"
             value={form.type}
             onChange={(e) => handleChange("type", e.target.value)}
           >
@@ -93,9 +94,9 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({ onSubmit }) => {
         {/* Institution Type */}
         {form.type === "institution" && (
           <div>
-            <label className="block mb-1">Institution Type</label>
+            <label className="block text-gray-700 mb-1 font-medium">Institution Type</label>
             <select
-              className="w-full border p-2 rounded"
+              className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400"
               value={form.institutionType || ""}
               onChange={(e) => handleChange("institutionType", e.target.value)}
               required
@@ -112,9 +113,9 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({ onSubmit }) => {
         {/* Individual Role */}
         {form.type === "individual" && (
           <div>
-            <label className="block mb-1">Role</label>
+            <label className="block text-gray-700 mb-1 font-medium">Role</label>
             <select
-              className="w-full border p-2 rounded"
+              className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400"
               value={form.individualRole || ""}
               onChange={(e) => handleChange("individualRole", e.target.value)}
               required
@@ -131,10 +132,10 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({ onSubmit }) => {
 
         {/* Other fields */}
         <div>
-          <label className="block mb-1">Email</label>
+          <label className="block text-gray-700 mb-1 font-medium">Email</label>
           <input
             type="email"
-            className="w-full border p-2 rounded"
+            className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400"
             value={form.email}
             onChange={(e) => handleChange("email", e.target.value)}
             required
@@ -142,10 +143,10 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({ onSubmit }) => {
         </div>
 
         <div>
-          <label className="block mb-1">Phone</label>
+          <label className="block text-gray-700 mb-1 font-medium">Phone</label>
           <input
             type="tel"
-            className="w-full border p-2 rounded"
+            className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400"
             value={form.phone}
             onChange={(e) => handleChange("phone", e.target.value)}
             required
@@ -153,10 +154,10 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({ onSubmit }) => {
         </div>
 
         <div>
-          <label className="block mb-1">Address</label>
+          <label className="block text-gray-700 mb-1 font-medium">Address</label>
           <input
             type="text"
-            className="w-full border p-2 rounded"
+            className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400"
             value={form.address}
             onChange={(e) => handleChange("address", e.target.value)}
             required
@@ -164,9 +165,9 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({ onSubmit }) => {
         </div>
 
         <div>
-          <label className="block mb-1">Description / Notes</label>
+          <label className="block text-gray-700 mb-1 font-medium">Description / Notes</label>
           <textarea
-            className="w-full border p-2 rounded"
+            className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400"
             value={form.description}
             onChange={(e) => handleChange("description", e.target.value)}
           />
@@ -174,7 +175,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({ onSubmit }) => {
 
         <button
           type="submit"
-          className="w-full py-2 bg-green-600 text-white rounded"
+          className="w-full py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
           disabled={loading}
         >
           {loading ? "Registering..." : "Register"}

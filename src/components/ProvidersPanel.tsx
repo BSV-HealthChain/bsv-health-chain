@@ -34,7 +34,7 @@ const ProvidersPanel: React.FC = () => {
   };
 
   return (
-    <div className="p-6 rounded-2xl bg-white shadow-xl border border-gray-100">
+    <div className="p-6 rounded-2xl bg-white shadow-xl border border-gray-100 max-w-lg mx-auto">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
         Healthcare Providers
       </h2>
@@ -43,7 +43,7 @@ const ProvidersPanel: React.FC = () => {
         {providers.map((p) => (
           <li
             key={p.id}
-            className="p-4 rounded-xl border border-gray-200 hover:shadow-lg transition flex flex-col justify-between"
+            className="p-4 rounded-xl border border-gray-200 hover:shadow-lg transition flex flex-col justify-between bg-gray-50"
           >
             <div>
               <strong className="text-gray-900 text-lg">{p.name}</strong>
@@ -51,7 +51,7 @@ const ProvidersPanel: React.FC = () => {
             </div>
             <button
               onClick={workflows[p.id]}
-              className="mt-3 self-start px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-medium transition"
+              className="mt-3 self-start px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-medium transition duration-200"
             >
               Launch Workflow
             </button>
