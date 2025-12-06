@@ -5,44 +5,13 @@ interface ErrorModalProps {
 
 export default function ErrorModal({ message, onClose }: ErrorModalProps) {
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: "rgba(0,0,0,0.4)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 9999,
-      }}
-    >
-      <div
-        style={{
-          background: "#fff",
-          padding: "25px",
-          borderRadius: "10px",
-          width: "350px",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
-          textAlign: "center",
-        }}
-      >
-        <h3 style={{ color: "red", marginBottom: "10px" }}>Error</h3>
-        <p>{message}</p>
-
+    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-sm p-6 text-center">
+        <h3 className="text-xl font-bold text-red-600 mb-3">Error</h3>
+        <p className="text-gray-700">{message}</p>
         <button
           onClick={onClose}
-          style={{
-            marginTop: "15px",
-            padding: "8px 15px",
-            borderRadius: "6px",
-            background: "#dc3545",
-            color: "#fff",
-            border: "none",
-            cursor: "pointer",
-          }}
+          className="mt-5 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition duration-200"
         >
           Close
         </button>

@@ -24,7 +24,6 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
 }) => {
   const { connectWallet } = useWallet();
 
-  // Unified mode for showing first wallet selection
   type Mode =
     | "choose-wallet"
     | "menu"
@@ -113,16 +112,14 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
       if (pubKey) {
         onConnected(pubKey, "external");
       } else {
-        console.error("No public key returned from connectWallet");
-        alert("Wallet connection failed. Check console for details.");
+        alert("Wallet connection failed.");
       }
     } catch (err) {
-      console.error("Failed to connect wallet:", err);
+      console.error("Wallet connection failed:", err);
       alert("Wallet connection failed. See console for details.");
     }
   };
 
-  // ------------------- Auto-refresh balances -------------------
   useEffect(() => {
     if (addresses.length > 0) {
       const interval = setInterval(refreshLocalBalances, 15000);
@@ -131,44 +128,44 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
   }, [addresses]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl w-full max-w-lg p-6 overflow-y-auto max-h-[90vh]">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-lg p-6 overflow-y-auto max-h-[90vh] shadow-lg">
         {/* ------------------- Unified Wallet Selection ------------------- */}
         {mode === "choose-wallet" && (
           <div className="flex flex-col gap-3">
-            <h2 className="text-lg font-bold mb-2 text-center">Connect Wallet</h2>
+            <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">Connect Wallet</h2>
             <button
-              className="w-full p-3 bg-blue-600 text-white rounded"
+              className="w-full p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
               onClick={handleExternalConnect}
             >
               Connect BSV Wallet (Desktop / Metanet / BRC-100)
             </button>
             <button
-              className="w-full p-3 bg-green-600 text-white rounded"
+              className="w-full p-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition"
               onClick={() => setMode("create")}
             >
               Create Local Wallet (WIF)
             </button>
             <button
-              className="w-full p-3 bg-yellow-600 text-white rounded"
+              className="w-full p-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition"
               onClick={() => setMode("import")}
             >
               Import Local Wallet (WIF)
             </button>
             <button
-              className="w-full p-3 bg-gray-700 text-white rounded"
+              className="w-full p-3 bg-gray-700 hover:bg-gray-800 text-white rounded-lg transition"
               onClick={() => setMode("unlock")}
             >
               Unlock Local Wallet
             </button>
             <button
-              className="w-full p-3 bg-purple-600 text-white rounded"
+              className="w-full p-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition"
               onClick={() => setMode("create-mnemonic")}
             >
               Create Mnemonic Wallet
             </button>
             <button
-              className="w-full p-3 bg-orange-600 text-white rounded"
+              className="w-full p-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition"
               onClick={() => setMode("import-mnemonic")}
             >
               Import Mnemonic Wallet
@@ -178,10 +175,9 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
 
         {/* ------------------- Local Wallet Flows ------------------- */}
         {mode !== "choose-wallet" && (
-          <div className="flex flex-col gap-3">
-            {/* Back button */}
+          <div className="flex flex-col gap-4">
             <button
-              className="text-blue-600 underline mb-2"
+              className="text-blue-600 hover:underline font-medium"
               onClick={() => setMode("choose-wallet")}
             >
               ← Back to Wallet Selection
@@ -190,16 +186,16 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
             {/* Create / Import / Unlock / Mnemonic flows */}
             {mode === "create" && (
               <>
-                <h3 className="text-lg font-semibold">Create Wallet</h3>
+                <h3 className="text-xl font-semibold text-gray-800">Create Wallet</h3>
                 <input
                   type="password"
                   placeholder="Set password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="border p-2 w-full mb-3 rounded"
+                  className="border p-3 w-full mb-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
                 />
                 <button
-                  className="w-full p-3 bg-green-600 text-white rounded"
+                  className="w-full p-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition"
                   onClick={handleCreateWIF}
                 >
                   Create
@@ -209,22 +205,22 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
 
             {mode === "import" && (
               <>
-                <h3 className="text-lg font-semibold">Import Wallet</h3>
+                <h3 className="text-xl font-semibold text-gray-800">Import Wallet</h3>
                 <input
                   placeholder="WIF private key"
                   value={wif}
                   onChange={(e) => setWif(e.target.value)}
-                  className="border p-2 w-full mb-2 rounded"
+                  className="border p-3 w-full mb-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
                 />
                 <input
                   type="password"
                   placeholder="Set password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="border p-2 w-full mb-3 rounded"
+                  className="border p-3 w-full mb-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
                 />
                 <button
-                  className="w-full p-3 bg-yellow-600 text-white rounded"
+                  className="w-full p-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition"
                   onClick={handleImportWIF}
                 >
                   Import
@@ -234,16 +230,16 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
 
             {mode === "unlock" && (
               <>
-                <h3 className="text-lg font-semibold">Unlock Wallet</h3>
+                <h3 className="text-xl font-semibold text-gray-800">Unlock Wallet</h3>
                 <input
                   type="password"
                   placeholder="Enter password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="border p-2 w-full mb-3 rounded"
+                  className="border p-3 w-full mb-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
                 />
                 <button
-                  className="w-full p-3 bg-gray-700 text-white rounded"
+                  className="w-full p-3 bg-gray-700 hover:bg-gray-800 text-white rounded-lg transition"
                   onClick={handleUnlock}
                 >
                   Unlock
@@ -253,9 +249,9 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
 
             {mode === "create-mnemonic" && (
               <>
-                <h3 className="text-lg font-bold mb-3">Create Mnemonic Wallet</h3>
+                <h3 className="text-xl font-bold text-gray-800">Create Mnemonic Wallet</h3>
                 <select
-                  className="border p-2 w-full mb-3"
+                  className="border p-3 w-full mb-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
                   onChange={(e) =>
                     setMnemonicLen(Number(e.target.value) as 12 | 24)
                   }
@@ -267,13 +263,13 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
                 <input
                   type="password"
                   placeholder="Set wallet password"
-                  className="border p-2 w-full mb-3 rounded"
+                  className="border p-3 w-full mb-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <button
                   onClick={handleCreateMnemonic}
-                  className="bg-purple-600 text-white p-3 rounded w-full"
+                  className="w-full p-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition"
                 >
                   Create Wallet
                 </button>
@@ -282,24 +278,24 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
 
             {mode === "import-mnemonic" && (
               <>
-                <h3 className="text-lg font-bold mb-3">Import Seed Phrase</h3>
+                <h3 className="text-xl font-bold text-gray-800">Import Seed Phrase</h3>
                 <textarea
                   placeholder="Enter 12 or 24 words"
                   value={mnemonic}
                   onChange={(e) => setMnemonic(e.target.value)}
-                  className="border p-2 w-full mb-3 rounded"
+                  className="border p-3 w-full mb-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
                   rows={3}
                 />
                 <input
                   type="password"
                   placeholder="Set password"
-                  className="border p-2 w-full mb-3 rounded"
+                  className="border p-3 w-full mb-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <button
                   onClick={handleImportMnemonic}
-                  className="bg-orange-600 text-white p-3 rounded w-full"
+                  className="w-full p-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition"
                 >
                   Import Seed Phrase
                 </button>
@@ -308,25 +304,23 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
 
             {/* Show local wallet addresses & balances */}
             {addresses.length > 0 && (
-              <div className="mt-4 p-3 bg-gray-100 rounded overflow-x-auto">
-                <h4 className="font-semibold mb-2">Addresses & Balances</h4>
-                <table className="w-full text-sm font-mono border-collapse">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left px-2 py-1">Address</th>
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg shadow-inner overflow-x-auto">
+                <h4 className="font-semibold text-gray-800 mb-2">Addresses & Balances</h4>
+                <table className="w-full text-sm font-mono border border-gray-200 rounded-lg">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="text-left px-3 py-2">Address</th>
                       {TOKENS.map((token) => (
-                        <th key={token} className="px-2 py-1 text-right">
-                          {token}
-                        </th>
+                        <th key={token} className="px-3 py-2 text-right">{token}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {addresses.map((addr) => (
-                      <tr key={addr} className="border-b">
-                        <td className="px-2 py-1 break-words">{addr}</td>
+                      <tr key={addr} className="border-t">
+                        <td className="px-3 py-2 break-words">{addr}</td>
                         {TOKENS.map((token) => (
-                          <td key={token} className="px-2 py-1 text-right">
+                          <td key={token} className="px-3 py-2 text-right">
                             {balances[addr]?.[token.toLowerCase()] ?? 0}
                           </td>
                         ))}
@@ -335,7 +329,7 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
                   </tbody>
                 </table>
                 <button
-                  className="mt-2 p-2 bg-blue-500 text-white rounded w-full"
+                  className="mt-3 w-full p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition"
                   onClick={handleExportPDF}
                 >
                   Export Backup PDF
@@ -348,7 +342,7 @@ const UnifiedWalletModal: React.FC<UnifiedWalletModalProps> = ({
         {/* Close Modal */}
         <button
           onClick={onClose}
-          className="mt-4 w-full p-2 text-red-500 underline rounded"
+          className="mt-6 w-full p-2 text-red-500 underline rounded hover:text-red-600 transition"
         >
           Close
         </button>

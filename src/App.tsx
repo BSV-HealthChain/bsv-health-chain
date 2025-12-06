@@ -16,7 +16,7 @@ import Payments from "./pages/patient/Payments";
 import Records from "./pages/patient/Records";
 
 // Provider
-import ProviderDashboard from "./pages/ProvidersDashboard";
+import ProvidersDashboard from "./pages/ProvidersDashboard";
 
 const App: React.FC = () => {
   return (
@@ -39,7 +39,7 @@ const App: React.FC = () => {
               </Route>
 
               {/* Provider */}
-              <Route path="/provider" element={<ProviderDashboard />} />
+              <Route path="/provider" element={<ProvidersDashboard />} />
             </Routes>
           </div>
         </div>

@@ -6,7 +6,7 @@ import type { FhirFormData } from "../../components/FhirForm";
 import { sha256Hex } from "../../utils/hash";
 
 const SATOSHIS_TO_PAY = 10;
-const RECEIVING_ADDRESS = "14rUsTzH1ecaiV2soyVJCsk95SS7L757sY";
+const RECEIVING_ADDRESS = "1HBWnYgjVm7unYsfga6wQp6H1Khj57TaXW";
 
 const SubmitData: React.FC = () => {
   const { pubKey, wallet, isConnected, connectWallet, setLastMessage } = useWallet();
@@ -23,16 +23,15 @@ const SubmitData: React.FC = () => {
 
       // PAYMENT
       const payResult = await wallet.pay?.({
-  satoshis: SATOSHIS_TO_PAY,
-  to: RECEIVING_ADDRESS
-});
+        satoshis: SATOSHIS_TO_PAY,
+        to: RECEIVING_ADDRESS,
+      });
 
-if (!payResult) {
-  throw new Error("This wallet does not support pay() method.");
-}
+      if (!payResult) {
+        throw new Error("This wallet does not support pay() method.");
+      }
 
-const { txid, rawTx } = payResult;
-
+      const { txid, rawTx } = payResult;
 
       // HASH
       const formHash = sha256Hex(JSON.stringify(data));
@@ -52,23 +51,31 @@ const { txid, rawTx } = payResult;
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-purple-50 min-h-screen">
       {!isConnected ? (
-  <button
-    onClick={() => connectWallet() }
-    className="bg-purple-600 text-white px-4 py-2 rounded"
-  >
-    Connect BSV Wallet
-  </button>
-) : (
-  <p className="text-green-600 font-semibold">
-    Connected: {pubKey?.slice(0, 12)}...
-  </p>
-)}
+        <button
+          onClick={() => connectWallet()}
+          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition"
+        >
+          Connect BSV Wallet
+        </button>
+      ) : (
+        <p className="text-green-600 font-semibold mb-4">
+          Connected: {pubKey?.slice(0, 12)}...
+        </p>
+      )}
 
-      <h1 className="text-2xl font-bold mb-4">Submit Medical Data</h1>
+      <h1 className="text-3xl font-bold mb-6 text-purple-800">Submit Medical Data</h1>
 
-      <FhirForm onSubmit={handleFormSubmit} disabled={isSubmitting} />
+      <div className="bg-white p-6 rounded-2xl shadow-lg">
+        <FhirForm onSubmit={handleFormSubmit} disabled={isSubmitting} />
+      </div>
+
+      {isSubmitting && (
+        <p className="mt-4 text-blue-600 font-medium">
+          Submitting data, please wait...
+        </p>
+      )}
     </div>
   );
 };

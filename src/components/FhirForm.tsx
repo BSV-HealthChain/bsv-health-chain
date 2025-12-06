@@ -43,15 +43,12 @@ const FhirForm: React.FC<FhirFormProps> = ({ onSubmit, disabled = false }) => {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
       return;
     }
-
     if (onSubmit) onSubmit(formData);
-
     setFormData({
       patientName: "",
       age: "",
@@ -67,65 +64,48 @@ const FhirForm: React.FC<FhirFormProps> = ({ onSubmit, disabled = false }) => {
 
       <form
         onSubmit={handleSubmit}
-        className="
-          bg-white shadow-xl rounded-2xl p-6 
-          max-w-md w-full mx-auto
-          border border-gray-200
-          space-y-5
-        "
+        className="bg-white shadow-xl rounded-2xl p-6 max-w-md w-full mx-auto border border-gray-200 space-y-5"
       >
-        <h2 className="text-2xl font-bold text-black text-center mb-4">
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-4">
           FHIR Patient Record
         </h2>
 
         {/* Patient Name */}
         <div className="flex flex-col space-y-1">
-          <label className="text-sm font-medium text-black">Patient Name</label>
+          <label className="text-sm font-medium text-gray-700">Patient Name</label>
           <input
             type="text"
             name="patientName"
             value={formData.patientName}
             onChange={handleChange}
             placeholder="Enter full name"
-            className="
-              w-full px-4 py-2 border border-gray-300 rounded-lg
-              focus:ring-2 focus:ring-blue-400 focus:border-blue-400
-              text-black placeholder-gray-400
-            "
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-800 placeholder-gray-400"
             required
           />
         </div>
 
         {/* Age */}
         <div className="flex flex-col space-y-1">
-          <label className="text-sm font-medium text-black">Age</label>
+          <label className="text-sm font-medium text-gray-700">Age</label>
           <input
             type="number"
             name="age"
             value={formData.age}
             onChange={handleChange}
             placeholder="Age"
-            className="
-              w-full px-4 py-2 border border-gray-300 rounded-lg
-              focus:ring-2 focus:ring-blue-400 focus:border-blue-400
-              text-black placeholder-gray-400
-            "
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-800 placeholder-gray-400"
             required
           />
         </div>
 
         {/* Gender */}
         <div className="flex flex-col space-y-1">
-          <label className="text-sm font-medium text-black">Gender</label>
+          <label className="text-sm font-medium text-gray-700">Gender</label>
           <select
             name="gender"
             value={formData.gender}
             onChange={handleChange}
-            className="
-              w-full px-4 py-2 border border-gray-300 rounded-lg 
-              bg-white text-black
-              focus:ring-2 focus:ring-blue-400 focus:border-blue-400
-            "
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
             required
           >
             <option value="">Select gender…</option>
@@ -137,36 +117,28 @@ const FhirForm: React.FC<FhirFormProps> = ({ onSubmit, disabled = false }) => {
 
         {/* Diagnosis */}
         <div className="flex flex-col space-y-1">
-          <label className="text-sm font-medium text-black">Diagnosis</label>
+          <label className="text-sm font-medium text-gray-700">Diagnosis</label>
           <input
             type="text"
             name="diagnosis"
             value={formData.diagnosis}
             onChange={handleChange}
             placeholder="Diagnosis or condition"
-            className="
-              w-full px-4 py-2 border border-gray-300 rounded-lg
-              focus:ring-2 focus:ring-blue-400 focus:border-blue-400
-              text-black placeholder-gray-400
-            "
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-800 placeholder-gray-400"
             required
           />
         </div>
 
         {/* Notes */}
         <div className="flex flex-col space-y-1">
-          <label className="text-sm font-medium text-black">Additional Notes</label>
+          <label className="text-sm font-medium text-gray-700">Additional Notes</label>
           <textarea
             name="notes"
             value={formData.notes}
             onChange={handleChange}
             placeholder="Optional notes..."
             rows={4}
-            className="
-              w-full px-4 py-2 border border-gray-300 rounded-lg
-              focus:ring-2 focus:ring-blue-400 focus:border-blue-400
-              text-black placeholder-gray-400
-            "
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-800 placeholder-gray-400"
           ></textarea>
         </div>
 
@@ -174,12 +146,7 @@ const FhirForm: React.FC<FhirFormProps> = ({ onSubmit, disabled = false }) => {
         <button
           type="submit"
           disabled={disabled}
-          className="
-            w-full py-3 rounded-lg font-semibold
-            bg-blue-500 hover:bg-blue-600 text-white
-            disabled:opacity-60 disabled:cursor-not-allowed
-            transition
-          "
+          className="w-full py-3 rounded-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60 disabled:cursor-not-allowed transition duration-200"
         >
           {disabled ? "Submitting…" : "Submit"}
         </button>

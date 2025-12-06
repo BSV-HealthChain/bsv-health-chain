@@ -28,15 +28,21 @@ const ConsultationsTab: React.FC<Props> = ({ pubKey }) => {
     fetchData();
   }, [pubKey]);
 
-  if (loading) return <p>Loading...</p>;
-  if (message) return <p className="text-gray-500">{message}</p>;
+  if (loading) 
+    return <p className="text-gray-500 text-center py-6">Loading consultations...</p>;
+
+  if (message) 
+    return <p className="text-gray-500 text-center py-6">{message}</p>;
 
   return (
-    <ul className="space-y-3">
+    <ul className="space-y-4">
       {consultations.map((req, idx) => (
-        <li key={idx} className="border p-3 rounded-xl bg-gray-50">
-          <p><b>Patient:</b> {req.pubKey}</p>
-          <p><b>Message:</b> {req.message}</p>
+        <li 
+          key={idx} 
+          className="border border-gray-200 p-4 rounded-xl bg-white shadow hover:shadow-md transition duration-200"
+        >
+          <p className="text-gray-700"><span className="font-semibold">Patient:</span> {req.pubKey}</p>
+          <p className="text-gray-600 mt-1"><span className="font-semibold">Message:</span> {req.message}</p>
         </li>
       ))}
     </ul>
