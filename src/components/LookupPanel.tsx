@@ -29,7 +29,7 @@ export default function LookupPanel() {
       const resFull = await fetch(`/api/lookup/${patientId}`);
       const full = resFull.ok ? await resFull.json() : null;
 
-      setResult({ overlay, full }); // <-- cleanly ends here
+      setResult({ overlay, full });
     } catch (e: any) {
       setLastMessage?.(e.message || "Lookup error");
     } finally {
@@ -38,30 +38,30 @@ export default function LookupPanel() {
   }
 
   return (
-    <div style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 8 }}>
-      <h2>Patient Records Lookup</h2>
+    <div className="p-6 border border-gray-300 rounded-xl bg-white shadow-md max-w-md mx-auto">
+      <h2 className="text-xl font-semibold text-gray-800 mb-4">Patient Records Lookup</h2>
 
       <input
         placeholder="patient-12345"
         value={patientId}
         onChange={(e) => setPatientId(e.target.value)}
-        style={{ width: "100%", padding: 8, borderRadius: 6, marginBottom: 12 }}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 placeholder-gray-400"
       />
 
       <button
         onClick={lookup}
         disabled={busy}
-        style={{ padding: "8px 12px", background: "#4f46e5", color: "white", borderRadius: 6 }}
+        className="w-full py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        Lookup Records
+        {busy ? "Looking up…" : "Lookup Records"}
       </button>
 
       {result ? (
-        <pre style={{ marginTop: 12, background: "#000", color: "#fff", padding: 12, borderRadius: 6 }}>
+        <pre className="mt-4 bg-gray-900 text-white p-4 rounded-lg overflow-x-auto text-sm">
           {JSON.stringify(result, null, 2)}
         </pre>
       ) : (
-        <p>No results yet.</p>
+        <p className="mt-4 text-gray-500 text-center">No results yet.</p>
       )}
     </div>
   );

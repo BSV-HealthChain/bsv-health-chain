@@ -10,26 +10,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
   const [mode, setMode] = useState<string | null>(null);
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "rgba(0,0,0,0.45)",
-        zIndex: 9999,
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          padding: 16,
-          borderRadius: 8,
-          width: 420,
-        }}
-      >
-        <h3>Login</h3>
+    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+      <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg">
+        <h3 className="text-xl font-semibold text-gray-800 mb-4">Login</h3>
 
         {!mode && (
           <button
@@ -38,22 +21,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
               connectWallet();
               onClose();
             }}
-            style={{
-              width: "100%",
-              padding: 10,
-              borderRadius: 6,
-              background: "#2563eb",
-              color: "white",
-            }}
+            className="w-full py-3 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700 transition duration-200"
           >
             Connect with BSV Wallet
           </button>
         )}
 
-        <div style={{ marginTop: 12, textAlign: "right" }}>
+        <div className="mt-4 text-right">
           <button
             onClick={onClose}
-            style={{ padding: "6px 10px", borderRadius: 6 }}
+            className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition duration-200"
           >
             Cancel
           </button>

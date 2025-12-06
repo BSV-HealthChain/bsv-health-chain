@@ -8,12 +8,17 @@ const LoginButton: React.FC = () => {
     <>
       <button
         onClick={() => setOpen(true)}
-        style={{
-          padding: "6px 10px",
-          borderRadius: 6,
-          background: "#111827",
-          color: "white",
-        }}
+        className="
+          px-4 py-2
+          bg-blue-600 
+          text-white 
+          rounded-lg 
+          shadow 
+          hover:bg-blue-700 
+          transition 
+          duration-200
+          font-medium
+        "
       >
         Login
       </button>
