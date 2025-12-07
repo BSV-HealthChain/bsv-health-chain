@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { useWallet } from "../../context/WalletContext";
 import FhirForm from "../../components/FhirForm";
 import type { FhirFormData } from "../../components/FhirForm";
-
 import { sha256Hex } from "../../utils/hash";
+
+// Backend service
+import { submitPatientData } from "../../services/patientService";
 
 const SATOSHIS_TO_PAY = 10;
 const RECEIVING_ADDRESS = "1HBWnYgjVm7unYsfga6wQp6H1Khj57TaXW";
@@ -36,10 +38,13 @@ const SubmitData: React.FC = () => {
       // HASH
       const formHash = sha256Hex(JSON.stringify(data));
 
-      await fetch("/api/patient/data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pubKey, txid, rawTx, formHash, formData: data }),
+      // BACKEND CALL
+      await submitPatientData({
+        pubKey,
+        txid,
+        rawTx,
+        formHash,
+        formData: data,
       });
 
       setLastMessage("Health data submitted successfully!");
@@ -72,9 +77,7 @@ const SubmitData: React.FC = () => {
       </div>
 
       {isSubmitting && (
-        <p className="mt-4 text-blue-600 font-medium">
-          Submitting data, please wait...
-        </p>
+        <p className="mt-4 text-blue-600 font-medium">Submitting data, please wait...</p>
       )}
     </div>
   );

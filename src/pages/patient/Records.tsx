@@ -1,15 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { useWallet } from "../../context/WalletContext";
+import { getPatientRecords } from "../../services/patientService";
 
 const Records: React.FC = () => {
   const { pubKey, connectWallet } = useWallet();
-  const [records, setRecords] = useState([]);
+  const [records, setRecords] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!pubKey) return;
-    fetch(`/api/patient/records/${pubKey}`)
-      .then(res => res.json())
-      .then(data => setRecords(data || []));
+
+    const loadRecords = async () => {
+      try {
+        setLoading(true);
+        const data = await getPatientRecords(pubKey);
+        setRecords(data || []);
+      } catch (err) {
+        console.error("Error loading patient records:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRecords();
   }, [pubKey]);
 
   return (
@@ -23,11 +36,11 @@ const Records: React.FC = () => {
         </button>
       ) : (
         <>
-          <h1 className="text-3xl font-bold mb-6 text-purple-800">
-            Medical Records
-          </h1>
+          <h1 className="text-3xl font-bold mb-6 text-purple-800">Medical Records</h1>
 
-          {records.length === 0 ? (
+          {loading ? (
+            <p className="text-blue-600 font-medium">Loading records...</p>
+          ) : records.length === 0 ? (
             <p className="text-gray-600">No medical records yet.</p>
           ) : (
             <ul className="space-y-4">

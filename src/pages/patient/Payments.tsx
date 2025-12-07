@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useWallet } from "../../context/WalletContext";
+import { getInvoices, markInvoicePaid } from "../../services/patientService";
 
 const Payments: React.FC = () => {
   const { pubKey, wallet, connectWallet } = useWallet();
@@ -7,12 +8,12 @@ const Payments: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
 
-  // Fetch invoices for logged-in patient
+  // Fetch invoices for patient
   const fetchInvoices = async () => {
     if (!pubKey) return;
+
     try {
-      const res = await fetch(`/api/invoice/${pubKey}`);
-      const data = await res.json();
+      const data = await getInvoices(pubKey);
       setInvoices(data);
     } catch (err) {
       console.error("Failed to fetch invoices:", err);
@@ -37,12 +38,13 @@ const Payments: React.FC = () => {
     setLoading(true);
 
     try {
+      // Create the BSV transaction
       const tx = await wallet.createAction({
         description: "Pay medical invoice",
         outputs: [
           {
             satoshis: invoice.amount,
-            lockingScript: invoice.providerId,
+            lockingScript: invoice.providerId, // provider address or script
             outputDescription: "Invoice payment",
           },
         ],
@@ -50,14 +52,13 @@ const Payments: React.FC = () => {
 
       console.log("Transaction created:", tx);
 
-      await fetch(`/api/invoice/paid/${invoice._id}`, {
-        method: "PATCH",
-      });
+      // Notify backend of paid invoice
+      await markInvoicePaid(invoice._id);
 
       setSuccess("Payment successful!");
       fetchInvoices();
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       alert("Payment failed");
     }
 
