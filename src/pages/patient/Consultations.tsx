@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useWallet } from "../../context/WalletContext";
+import { sendConsultationRequest } from "../../services/patientService";
 
 const Consultations: React.FC = () => {
   const { pubKey, connectWallet } = useWallet();
@@ -11,15 +12,14 @@ const Consultations: React.FC = () => {
     if (!pubKey) return;
 
     try {
-      const res = await fetch("/api/patient/consultation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, pubKey }),
-      });
+      const data = await sendConsultationRequest(
+        pubKey,
+        form.providerId,
+        form.message
+      );
 
-      const data = await res.json();
       setSuccess(`Consultation request sent! ID: ${data.requestId}`);
-      setForm({ providerId: "", message: "" }); // reset form
+      setForm({ providerId: "", message: "" });
     } catch (err) {
       console.error(err);
       alert("Failed to send consultation request.");
@@ -37,10 +37,14 @@ const Consultations: React.FC = () => {
         </button>
       ) : (
         <>
-          <h1 className="text-2xl font-bold mb-4 text-center">Consultation Request</h1>
+          <h1 className="text-2xl font-bold mb-4 text-center">
+            Consultation Request
+          </h1>
 
           {success && (
-            <p className="text-green-600 mb-4 text-center font-medium">{success}</p>
+            <p className="text-green-600 mb-4 text-center font-medium">
+              {success}
+            </p>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -49,7 +53,9 @@ const Consultations: React.FC = () => {
               className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="Provider ID"
               value={form.providerId}
-              onChange={(e) => setForm({ ...form, providerId: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, providerId: e.target.value })
+              }
               required
             />
 
@@ -57,7 +63,9 @@ const Consultations: React.FC = () => {
               className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="Brief message"
               value={form.message}
-              onChange={(e) => setForm({ ...form, message: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, message: e.target.value })
+              }
               rows={4}
               required
             />
