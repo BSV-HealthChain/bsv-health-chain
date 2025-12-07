@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import type { Record } from "../../services/providerService";
+import type { HealthRecord } from "../../services/providerService";
 import { getRecords } from "../../services/providerService";
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
 }
 
 const RecordsTab: React.FC<Props> = ({ pubKey }) => {
-  const [records, setRecords] = useState<Record[]>([]);
+  const [records, setRecords] = useState<HealthRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
