@@ -51,3 +51,4 @@ Please read **[CONTRIBUTING.md](CONTRIBUTING.md)** before submitting pull reques
 2. Create branch from `develop`
 3. Follow commit guidelines
 4. Submit PR with description
+5. Alway make pull request to develop not main branch.
